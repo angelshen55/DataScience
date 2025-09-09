@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2025 aisleron.com
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_in_stock">
+
+    <fragment
+        android:id="@+id/nav_in_stock"
+        android:name="com.aisleron.ui.shoppinglist.ShoppingListFragment"
+        tools:layout="@layout/fragment_shopping_list">
+        <argument
+            android:name="locationId"
+            app:argType="integer"
+            android:defaultValue="1" />
+        <argument
+            android:name="filterType"
+            app:argType="com.aisleron.domain.FilterType"
+            android:defaultValue="IN_STOCK" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_needed"
+        android:name="com.aisleron.ui.shoppinglist.ShoppingListFragment"
+        tools:layout="@layout/fragment_shopping_list">
+        <argument
+            android:name="locationId"
+            app:argType="integer"
+            android:defaultValue="1" />
+        <argument
+            android:name="filterType"
+            app:argType="com.aisleron.domain.FilterType"
+            android:defaultValue="NEEDED" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_all_items"
+        android:name="com.aisleron.ui.shoppinglist.ShoppingListFragment"
+        tools:layout="@layout/fragment_shopping_list">
+        <argument
+            android:name="locationId"
+            app:argType="integer"
+            android:defaultValue="1" />
+        <argument
+            android:name="filterType"
+            app:argType="com.aisleron.domain.FilterType"
+            android:defaultValue="ALL" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_shopping_list"
+        android:name="com.aisleron.ui.shoppinglist.ShoppingListFragment"
+        tools:layout="@layout/fragment_shopping_list">
+        <argument
+            android:name="locationId"
+            app:argType="integer"
+            android:defaultValue="1" />
+        <argument
+            android:name="filterType"
+            app:argType="com.aisleron.domain.FilterType"
+            android:defaultValue="NEEDED" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.aisleron.ui.settings.SettingsFragment"
+        android:label="@string/menu_settings"
+        tools:layout="@xml/root_preferences" />
+
+    <fragment
+        android:id="@+id/nav_all_shops"
+        android:name="com.aisleron.ui.shoplist.ShopListFragment"
+        android:label="@string/menu_all_shops"
+        tools:layout="@layout/fragment_shop_list">
+        <action
+            android:id="@+id/action_nav_all_shops_to_nav_shopping_list"
+            app:destination="@id/nav_shopping_list">
+            <argument
+                android:name="com.aisleron.domain.FilterType"
+                android:defaultValue="NEEDED" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_add_shop"
+        android:name="com.aisleron.ui.shop.ShopFragment"
+        android:label="@string/add_location"
+        tools:layout="@layout/fragment_shop">
+        <argument
+            android:name="addEditLocationBundle"
+            app:argType="com.aisleron.ui.bundles.AddEditLocationBundle" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_add_product"
+        android:name="com.aisleron.ui.product.ProductFragment"
+        android:label="@string/add_product"
+        tools:layout="@layout/fragment_product">
+        <argument
+            android:name="addEditProductBundle"
+            app:argType="com.aisleron.ui.bundles.AddEditProductBundle" />
+    </fragment>
+    <activity
+        android:id="@+id/nav_about"
+        android:name="com.aisleron.AboutActivity"
+        android:label="@string/title_activity_about"
+        tools:layout="@layout/activity_about" />
+    <fragment
+        android:id="@+id/nav_welcome"
+        android:name="com.aisleron.ui.welcome.WelcomeFragment"
+        android:label="@string/welcome_app_title"
+        tools:layout="@layout/fragment_welcome" />
+</navigation>

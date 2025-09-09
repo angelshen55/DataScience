@@ -1,0 +1,102 @@
+<!--
+  ~ Copyright (C) 2025 aisleron.com
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.Aisleron" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/blue_100</item>
+        <item name="colorPrimaryVariant">@color/orange_100</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/blue_300</item>
+        <item name="colorSecondaryVariant">@color/orange_300</item>
+        <item name="colorOnSecondary">@color/black</item>
+
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+
+        <!-- Error snackbar color. -->
+        <item name="colorErrorSnackbarBackground">@color/red_dark</item>
+        <item name="colorErrorSnackbarText">@color/white</item>
+
+        <!-- Customize your theme here. -->
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionModeStyle">@style/Theme.Aisleron.ActionMode</item>
+        <item name="actionBarPopupTheme">@style/Theme.Aisleron.PopupOverlay</item>
+        <item name="colorSelectedListItem">?android:attr/colorControlHighlight</item>
+        <item name="actionBarStyle">@style/Theme.Aisleron.ActionBarStyle</item>
+        <item name="colorAisleron">@color/blue_100</item>
+
+        <!--this is makes changes to the entire snackbar-->
+        <item name="snackbarStyle">@style/Theme.Aisleron.Snackbar</item>
+    </style>
+
+    <style name="Theme.Aisleron.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.Aisleron.ActionBarStyle" parent="@style/Widget.AppCompat.Light.ActionBar">
+        <!-- Style removes shadow around the action bar on non-primary activities       -->
+    </style>
+
+    <style name="Theme.Aisleron.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:background">?attr/colorPrimary</item>
+    </style>
+
+    <style name="Theme.Aisleron.PopupOverlay" parent="Theme.Aisleron">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:background"></item>
+    </style>
+
+    <style name="Theme.Aisleron.ActionMode" parent="Widget.AppCompat.ActionMode">
+        <item name="background">@drawable/action_mode_background</item>
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+        <item name="height">@dimen/toolbar_height</item>
+    </style>
+
+    <style name="Theme.Aisleron.NavigationDrawer" parent="Theme.Aisleron">
+        <item name="android:drawablePadding">@dimen/menu_padding</item>
+        <item name="android:padding">@dimen/menu_padding</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="Theme.Aisleron.OverlayText" parent="Theme.Aisleron">
+        <item name="android:padding">6dp</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">@drawable/text_background_rounded</item>
+    </style>
+
+    <style name="FloatingActionButtonPrimary" parent="Theme.Aisleron">
+        <item name="colorSecondary">?attr/colorAisleron</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="FloatingActionButtonSecondary" parent="FloatingActionButtonPrimary">
+        <item name="fabCustomSize">40dp</item>
+    </style>
+
+    <style name="Theme.Aisleron.Snackbar" parent="Widget.MaterialComponents.Snackbar">
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Large</item>
+    </style>
+
+</resources>
+

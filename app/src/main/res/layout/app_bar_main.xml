@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2025 aisleron.com
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/app_bar_main"
+    tools:context=".MainActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/Theme.Aisleron.AppBarOverlay"
+        android:background="?android:statusBarColor">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/toolbar_height"
+            app:popupTheme="@style/Theme.Aisleron.PopupOverlay" />
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <include layout="@layout/content_main" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="@dimen/fab_margin"
+        android:layout_marginBottom="@dimen/fab_margin_bottom"
+        android:contentDescription="@string/main_fab"
+        android:theme="@style/FloatingActionButtonPrimary"
+        app:srcCompat="@android:drawable/ic_input_add" />
+
+    <TextView
+        android:id="@+id/add_shop_fab_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/add_location"
+        app:layout_anchor="@id/fab_add_shop"
+        android:layout_gravity="start|center_vertical"
+        style="@style/Theme.Aisleron.OverlayText"
+        app:layout_anchorGravity="center_vertical" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_shop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/add_shop_fab"
+        app:layout_anchor="@id/fab"
+        app:layout_anchorGravity="top|end"
+        android:layout_gravity="top"
+        android:layout_marginEnd="@dimen/mini_fab_margin"
+        android:theme="@style/FloatingActionButtonSecondary"
+        app:srcCompat="@drawable/baseline_add_business_24" />
+
+    <TextView
+        android:id="@+id/add_aisle_fab_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/add_aisle"
+        app:layout_anchorGravity="center_vertical"
+        app:layout_anchor="@id/fab_add_aisle"
+        android:layout_gravity="start|center_vertical"
+        style="@style/Theme.Aisleron.OverlayText" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_aisle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/add_aisle_fab"
+        app:layout_anchor="@id/fab_add_shop"
+        app:layout_anchorGravity="top"
+        android:layout_gravity="top|end"
+        android:theme="@style/FloatingActionButtonSecondary"
+        app:srcCompat="@drawable/baseline_add_aisle_24" />
+
+
+    <TextView
+        android:id="@+id/add_product_fab_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/add_product"
+        app:layout_anchor="@id/fab_add_product"
+        android:layout_gravity="start|center_vertical"
+        style="@style/Theme.Aisleron.OverlayText"
+        app:layout_anchorGravity="center_vertical" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_product"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/add_product_fab"
+        app:layout_anchor="@id/fab_add_aisle"
+        app:layout_anchorGravity="end"
+        android:layout_gravity="top"
+        android:theme="@style/FloatingActionButtonSecondary"
+        app:srcCompat="@drawable/baseline_add_product_24" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

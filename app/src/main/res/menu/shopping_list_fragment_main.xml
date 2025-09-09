@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2025 aisleron.com
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_search"
+        android:orderInCategory="100"
+        android:title="@string/action_search"
+        android:icon="@drawable/baseline_search_24"
+        app:showAsAction="always|collapseActionView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        tools:ignore="AlwaysShowAction" />
+
+    <item
+        android:id="@+id/mnu_show_loyalty_card"
+        android:orderInCategory="200"
+        android:title="@string/loyalty_card"
+        android:visible="false"
+        android:icon="@drawable/loyalty_card_24"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/mnu_sort_list_by_name"
+        android:icon="@drawable/baseline_sort_24"
+        android:title="@string/mnu_sort_list_by_name"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/mnu_edit_shop"
+        android:icon="@drawable/baseline_edit_24"
+        android:title="@string/mnu_edit_location"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/mnu_show_empty_aisles"
+        android:title="@string/show_empty_aisles"
+        android:checkable="true"
+        app:showAsAction="never" />
+
+</menu>
