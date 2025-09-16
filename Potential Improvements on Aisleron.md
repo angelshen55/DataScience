@@ -3,6 +3,7 @@
 
 
 ## Shops management and aisle layout:
+shop management and recommendation in map
 
 more direct aisle layout from 1D to 2D (grid display)
 
@@ -31,6 +32,16 @@ history(shops, products,consumption record)
 ->route schedule
 
 ->purchase weekly/monthly plan with budget 
+
+
+
+# Functions Importance Ranking
+
+1. database feature expansion(price, frequency...) => image, audio, text product addition 
+
+2. database history features => recommendation & prediction
+
+3. other functions in display and organization
 
 
 
