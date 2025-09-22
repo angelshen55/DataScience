@@ -141,6 +141,7 @@
     <string name="product">Product</string>
     <string name="add_product">Add Product</string>
     <string name="product_name">Product Name</string>
+    <string name="product_price">Price</string>
     <string name="save">Save</string>
     <string name="shop_name">Shop Name</string>
     <string name="add_location">Add Shop</string>
