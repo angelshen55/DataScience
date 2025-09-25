@@ -28,6 +28,9 @@ sealed class AisleronException(
     class DuplicateProductNameException(message: String? = null, cause: Throwable? = null) :
         AisleronException(ExceptionCode.DUPLICATE_PRODUCT_NAME_EXCEPTION, message, cause)
 
+    class NegativePriceException(message: String? = null, cause: Throwable? = null) :
+        AisleronException(ExceptionCode.NEGATIVE_PRICE_EXCEPTION, message, cause)
+
     class DuplicateLocationNameException(message: String? = null, cause: Throwable? = null) :
         AisleronException(ExceptionCode.DUPLICATE_LOCATION_NAME_EXCEPTION, message, cause)
 
@@ -68,6 +71,7 @@ sealed class AisleronException(
         GENERIC_EXCEPTION,
         DELETE_DEFAULT_AISLE_EXCEPTION,
         DUPLICATE_PRODUCT_NAME_EXCEPTION,
+        NEGATIVE_PRICE_EXCEPTION,
         DUPLICATE_LOCATION_NAME_EXCEPTION,
         DUPLICATE_AISLE_NAME_EXCEPTION,
         INVALID_LOCATION_EXCEPTION,

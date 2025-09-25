@@ -61,6 +61,7 @@
     <string name="generic_error">ERROR: %1$s</string>
     <string name="delete_default_aisle_exception">ERROR: Default Aisle can\'t be removed</string>
     <string name="duplicate_product_name_exception">ERROR: Product Name must be unique</string>
+    <string name="negative_price_exception">ERROR: Price must be positive</string>
     <string name="duplicate_location_name_exception">ERROR: Location Name must be unique</string>
     <string name="duplicate_aisle_name_exception">ERROR: Aisle Name must be unique per list</string>
     <string name="invalid_location_exception">ERROR: Invalid Location Id provided</string>
