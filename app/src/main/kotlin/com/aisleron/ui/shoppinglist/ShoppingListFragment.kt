@@ -166,6 +166,13 @@ class ShoppingListFragment(
                             shoppingListViewModel.updateProductNeededQuantity(item, quantity)
                         }
 
+                        override fun onProductPriceChange(
+                            item: ProductShoppingListItem,
+                            price: Double
+                        ) {
+                            shoppingListViewModel.updateProductPrice(item, price)
+                        }
+
                         override fun onListPositionChanged(
                             item: ShoppingListItem, precedingItem: ShoppingListItem?
                         ) {

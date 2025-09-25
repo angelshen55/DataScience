@@ -227,6 +227,10 @@ class ShoppingListItemRecyclerViewAdapter(
 
         private var qtyWatcher: TextWatcher? = null
 
+//        private val priceSelector: LinearLayout = binding.stpPriceSelector
+        private val priceEdit: EditText = binding.edtPrice
+        private var priceWatcher: TextWatcher? = null
+
         fun bind(item: ProductShoppingListItem) {
             contentView.text = item.name
             inStockView.isChecked = item.inStock
@@ -288,7 +292,27 @@ class ShoppingListItemRecyclerViewAdapter(
                     qtyEdit.setText(newQty.toString())
                 }
             }
+
+//          Price functions
+            priceWatcher?.let {
+                priceEdit.removeTextChangedListener(it)
+                priceWatcher = null
+            }
+
+            // 设置价格值，格式化为2位小数
+            priceEdit.setText(String.format("%.2f", item.price))
+            priceEdit.setSelection(priceEdit.text?.length ?: 0)
+
+            // Add a new price watcher and keep reference
+            priceWatcher = priceEdit.doAfterTextChanged { editable ->
+                val newPrice = editable?.toString()?.toDoubleOrNull() ?: 0.0
+                listener.onProductPriceChange(item, newPrice)
+            }
+
+            // 价格选择器始终可见，或者根据需求设置可见性条件
+//            priceSelector.isVisible = true  // 可以根据需要调整显示条
         }
+
     }
 
     inner class EmptyListItemViewHolder(binding: FragmentEmptyListItemBinding) :
@@ -300,6 +324,7 @@ class ShoppingListItemRecyclerViewAdapter(
         fun onClick(item: ShoppingListItem)
         fun onProductStatusChange(item: ProductShoppingListItem, inStock: Boolean)
         fun onProductQuantityChange(item: ProductShoppingListItem, quantity: Int)
+        fun onProductPriceChange(item: ProductShoppingListItem, price: Double)
         fun onListPositionChanged(item: ShoppingListItem, precedingItem: ShoppingListItem?)
         fun onLongClick(item: ShoppingListItem, view: View): Boolean
         fun onMoved(item: ShoppingListItem)

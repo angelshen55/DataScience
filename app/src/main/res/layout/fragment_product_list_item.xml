@@ -46,6 +46,19 @@
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
+        <EditText
+            android:id="@+id/edt_price"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:importantForAutofill="no"
+            android:hint="@string/price"
+            android:minWidth="60dp"
+            android:gravity="center"
+            android:inputType="numberDecimal"
+            android:maxLength="8"
+            android:padding="@dimen/text_margin"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            tools:ignore="LabelFor" />
 
         <LinearLayout
             android:id="@+id/stp_qty_selector"
