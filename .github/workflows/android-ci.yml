@@ -2,7 +2,7 @@ name: Android CI (Debug)
 
 on:
   push:
-    branches: [ "main"]
+    branches: [ "main", "angelshen55-patch-1"]
   pull_request:
   workflow_dispatch:
 
