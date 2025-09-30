@@ -26,6 +26,7 @@ class AisleronExceptionMap {
             ExceptionCode.GENERIC_EXCEPTION -> R.string.generic_error
             ExceptionCode.DELETE_DEFAULT_AISLE_EXCEPTION -> R.string.delete_default_aisle_exception
             ExceptionCode.DUPLICATE_PRODUCT_NAME_EXCEPTION -> R.string.duplicate_product_name_exception
+            ExceptionCode.NEGATIVE_PRICE_EXCEPTION -> R.string.negative_price_exception
             ExceptionCode.DUPLICATE_LOCATION_NAME_EXCEPTION -> R.string.duplicate_location_name_exception
             ExceptionCode.DUPLICATE_AISLE_NAME_EXCEPTION -> R.string.duplicate_aisle_name_exception
             ExceptionCode.INVALID_LOCATION_EXCEPTION -> R.string.invalid_location_exception

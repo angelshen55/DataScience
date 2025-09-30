@@ -35,6 +35,7 @@ class AddProductUseCaseImpl(
     private val getDefaultAislesUseCase: GetDefaultAislesUseCase,
     private val addAisleProductsUseCase: AddAisleProductsUseCase,
     private val isProductNameUniqueUseCase: IsProductNameUniqueUseCase,
+    private val isPricePositiveUseCase: IsPricePositiveUseCase,
     private val getAisleMaxRankUseCase: GetAisleMaxRankUseCase
 
 ) : AddProductUseCase {
@@ -42,6 +43,10 @@ class AddProductUseCaseImpl(
 
         if (!isProductNameUniqueUseCase(product)) {
             throw AisleronException.DuplicateProductNameException("Product Name must be unique")
+        }
+
+        if (!isPricePositiveUseCase(product)) {
+            throw AisleronException.NegativePriceException("Price must be positive")
         }
 
         if (productRepository.get(product.id) != null) {

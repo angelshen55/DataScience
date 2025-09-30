@@ -35,6 +35,7 @@ import com.aisleron.domain.loyaltycard.LoyaltyCard
 import com.aisleron.domain.loyaltycard.usecase.GetLoyaltyCardForLocationUseCase
 import com.aisleron.domain.product.usecase.RemoveProductUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCase
+import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
 import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -56,12 +57,14 @@ class ShoppingListViewModel(
     private val sortLocationByNameUseCase: SortLocationByNameUseCase,
     private val getLoyaltyCardForLocationUseCase: GetLoyaltyCardForLocationUseCase,
     private val updateProductQtyNeededUseCase: UpdateProductQtyNeededUseCase,
+    private val updateProductPriceUseCase: UpdateProductPriceUseCase,
     private val debounceTime: Long = 300,
     coroutineScopeProvider: CoroutineScope? = null
 ) : ViewModel() {
     private val coroutineScope = coroutineScopeProvider ?: this.viewModelScope
     private var searchJob: Job? = null
     private var updateQtyJob: Job? = null
+    private var updatePriceJob: Job? = null
 
     private var _location: Location? = null
     private var _showDefaultAisle: Boolean = true
@@ -133,6 +136,7 @@ class ShoppingListViewModel(
                                     name = ap.product.name,
                                     inStock = ap.product.inStock,
                                     qtyNeeded = ap.product.qtyNeeded,
+                                    price = ap.product.price,
                                     aisleId = ap.aisleId,
                                     aisleProductId = ap.id,
                                     removeProductUseCase = removeProductUseCase,
@@ -216,6 +220,21 @@ class ShoppingListViewModel(
             }
         }
 
+    }
+
+    fun updateProductPrice(item: ProductShoppingListItem, price: Double) {
+        updatePriceJob?.cancel()
+        updatePriceJob = coroutineScope.launch {
+            delay(debounceTime)
+            try {
+                updateProductPriceUseCase(item.id, price)
+            } catch (e: Exception) {
+                _shoppingListUiState.value =
+                    ShoppingListUiState.Error(
+                        AisleronException.ExceptionCode.GENERIC_EXCEPTION, e.message
+                    )
+            }
+        }
     }
 
     fun updateAisleExpanded(item: AisleShoppingListItem, expanded: Boolean) {

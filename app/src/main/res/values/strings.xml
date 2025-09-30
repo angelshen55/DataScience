@@ -61,6 +61,7 @@
     <string name="generic_error">ERROR: %1$s</string>
     <string name="delete_default_aisle_exception">ERROR: Default Aisle can\'t be removed</string>
     <string name="duplicate_product_name_exception">ERROR: Product Name must be unique</string>
+    <string name="negative_price_exception">ERROR: Price must be positive</string>
     <string name="duplicate_location_name_exception">ERROR: Location Name must be unique</string>
     <string name="duplicate_aisle_name_exception">ERROR: Aisle Name must be unique per list</string>
     <string name="invalid_location_exception">ERROR: Invalid Location Id provided</string>
@@ -141,6 +142,7 @@
     <string name="product">Product</string>
     <string name="add_product">Add Product</string>
     <string name="product_name">Product Name</string>
+    <string name="product_price">Price</string>
     <string name="save">Save</string>
     <string name="shop_name">Shop Name</string>
     <string name="add_location">Add Shop</string>
@@ -186,5 +188,6 @@
     <string name="decrement">Decrement</string>
     <string name="increment">Increment</string>
     <string name="qty">Qty</string>
+    <string name='price'>Price</string>
 
 </resources>

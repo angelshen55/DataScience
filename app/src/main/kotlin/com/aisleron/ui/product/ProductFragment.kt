@@ -98,6 +98,12 @@ class ProductFragment(
                             binding.edtProductName.setText(data.productName)
                         }
 
+                        // Update price field
+                        val priceText = if (data.price == 0.0) "" else data.price.toString()
+                        if (binding.edtProductPrice.text.toString() != priceText) {
+                            binding.edtProductPrice.setText(priceText)
+                        }
+
                         // Update CheckedTextView
                         if (binding.chkProductInStock.isChecked != data.inStock) {
                             binding.chkProductInStock.isChecked = data.inStock
@@ -128,6 +134,14 @@ class ProductFragment(
             val newText = it?.toString() ?: ""
             if (productViewModel.uiData.value.productName != newText) {
                 productViewModel.updateProductName(newText)
+            }
+        }
+
+        binding.edtProductPrice.doAfterTextChanged {
+            val newText = it?.toString() ?: ""
+            val price = newText.toDoubleOrNull() ?: 0.0
+            if (productViewModel.uiData.value.price != price) {
+                productViewModel.updatePrice(price)
             }
         }
 

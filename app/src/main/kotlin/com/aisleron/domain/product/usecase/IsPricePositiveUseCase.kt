@@ -15,12 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.aisleron.ui.shoppinglist
+package com.aisleron.domain.product.usecase
 
-interface ProductShoppingListItem : ShoppingListItem {
-    val inStock: Boolean
-    val qtyNeeded: Int
-    val price: Double
-    override val itemType: ShoppingListItem.ItemType
-        get() = ShoppingListItem.ItemType.PRODUCT
+import com.aisleron.domain.product.Product
+import com.aisleron.domain.product.ProductRepository
+
+class IsPricePositiveUseCase{
+    suspend operator fun invoke(product: Product): Boolean {
+        return if (product.price >= 0) true else false
+    }
 }

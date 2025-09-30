@@ -71,10 +71,13 @@ import com.aisleron.domain.product.usecase.CopyProductUseCase
 import com.aisleron.domain.product.usecase.CopyProductUseCaseImpl
 import com.aisleron.domain.product.usecase.GetAllProductsUseCase
 import com.aisleron.domain.product.usecase.GetProductUseCase
+import com.aisleron.domain.product.usecase.IsPricePositiveUseCase
 import com.aisleron.domain.product.usecase.IsProductNameUniqueUseCase
 import com.aisleron.domain.product.usecase.RemoveProductUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCaseImpl
+import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
+import com.aisleron.domain.product.usecase.UpdateProductPriceUseCaseImpl
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCaseImpl
 import com.aisleron.domain.product.usecase.UpdateProductUseCase
@@ -199,6 +202,7 @@ val useCaseModule = module {
     factory<GetProductUseCase> { GetProductUseCase(productRepository = get()) }
     factory<RemoveProductUseCase> { RemoveProductUseCase(productRepository = get()) }
     factory<IsProductNameUniqueUseCase> { IsProductNameUniqueUseCase(productRepository = get()) }
+    factory<IsPricePositiveUseCase> { IsPricePositiveUseCase() }
 
     factory<UpdateProductUseCase> {
         UpdateProductUseCase(
@@ -213,6 +217,7 @@ val useCaseModule = module {
             getDefaultAislesUseCase = get(),
             addAisleProductsUseCase = get(),
             isProductNameUniqueUseCase = get(),
+            isPricePositiveUseCase = get(),
             getAisleMaxRankUseCase = get()
         )
     }
@@ -226,6 +231,13 @@ val useCaseModule = module {
 
     factory<UpdateProductQtyNeededUseCase> {
         UpdateProductQtyNeededUseCaseImpl(
+            getProductUseCase = get(),
+            updateProductUseCase = get()
+        )
+    }
+
+    factory<UpdateProductPriceUseCase> {
+        UpdateProductPriceUseCaseImpl(
             getProductUseCase = get(),
             updateProductUseCase = get()
         )

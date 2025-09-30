@@ -60,8 +60,9 @@ class ProductViewModel(
             _productUiState.value = ProductUiState.Loading
             product = getProductUseCase(productId)
             _uiData.value = ProductUiData(
-                productName = product?.name.orEmpty(),
-                inStock = product?.inStock ?: inStock
+                productName = product?.name ?: "",
+                inStock = product?.inStock ?: inStock,
+                price = product?.price ?: 0.0
             )
             _productUiState.value = ProductUiState.Empty
         }
@@ -75,22 +76,27 @@ class ProductViewModel(
         _uiData.value = _uiData.value.copy(inStock = inStock)
     }
 
+    fun updatePrice(price: Double) {
+        _uiData.value = _uiData.value.copy(price = price)
+    }
+
     fun saveProduct() {
         coroutineScope.launch {
             val name = _uiData.value.productName
             val inStock = _uiData.value.inStock
+            val price = _uiData.value.price
             if (name.isBlank()) return@launch
 
             _productUiState.value = ProductUiState.Loading
             try {
                 val aisle = _aisleId?.let { getAisleUseCase(it) }
                 product?.let {
-                    val updated = it.copy(name = name, inStock = inStock)
+                    val updated = it.copy(name = name, inStock = inStock, price = price)
                     updateProductUseCase(updated)
                     product = updated
                 } ?: run {
                     val id = addProductUseCase(
-                        Product(name = name, inStock = inStock, id = 0, qtyNeeded = 0),
+                        Product(name = name, inStock = inStock, id = 0, qtyNeeded = 0, price = price),
                         aisle
                     )
 
