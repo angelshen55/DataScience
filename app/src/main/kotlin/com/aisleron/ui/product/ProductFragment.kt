@@ -99,9 +99,25 @@ class ProductFragment(
                         }
 
                         // Update price field
+//                        val priceText = if (data.price == 0.0) "" else data.price.toString()
+//                        if (binding.edtProductPrice.text.toString() != priceText) {
+//                            binding.edtProductPrice.setText(priceText)
+//                        }
+//                        val priceText = if (data.price == 0.0) "" else data.price.toString()
+//                        if (binding.edtProductPrice.text.toString() != priceText) {
+//                            binding.edtProductPrice.apply {
+//                                setText(priceText)
+//                                setSelection(priceText.length) // 将光标移动到文本末尾
+//                            }
+//                        }
                         val priceText = if (data.price == 0.0) "" else data.price.toString()
                         if (binding.edtProductPrice.text.toString() != priceText) {
-                            binding.edtProductPrice.setText(priceText)
+                            binding.edtProductPrice.apply {
+                                setText(priceText)
+                                // 找到小数点的位置，如果没有小数点则使用文本长度
+                                val decimalIndex = priceText.indexOf('.')
+                                setSelection(if (decimalIndex != -1) decimalIndex else priceText.length)
+                            }
                         }
 
                         // Update CheckedTextView
