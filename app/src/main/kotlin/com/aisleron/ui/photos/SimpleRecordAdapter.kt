@@ -1,4 +1,21 @@
-package com.aisleron.ui.history
+/*
+ * Copyright (C) 2025 aisleron.com
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.aisleron.ui.photos
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,8 +23,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.aisleron.R
-import com.aisleron.domain.record.Record
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.record.Record
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +53,7 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
         val r = items[position]
         holder.title.text = "Loading... • ${df.format(r.date)}"
         holder.sub.text = "Stock=${r.stock}  Price=${r.price}"
-        
+
         // 异步获取产品名称
         productRepository?.let { repo ->
             CoroutineScope(Dispatchers.IO).launch {
