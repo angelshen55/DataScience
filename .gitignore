@@ -36,3 +36,7 @@ keystore.properties
 # .idea files
 /.idea/androidTestResultsUserPreferences.xml
 /.idea/deploymentTargetSelector.xml
+.idea
+
+#version files
+/app/schemas/com.aisleron.data.AisleronDatabase/6.json

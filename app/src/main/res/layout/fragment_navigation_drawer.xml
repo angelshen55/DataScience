@@ -113,11 +113,11 @@
                 android:background="?android:attr/listDivider" />
 
             <TextView
-                android:id="@+id/nav_history"
+                android:id="@+id/nav_photos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/menu_history"
-                app:drawableStartCompat="@drawable/baseline_history_24"
+                android:text="@string/menu_photos"
+                app:drawableStartCompat="@drawable/baseline_add_photos_24"
                 android:textAppearance="?attr/textAppearanceListItem" />
 
             <TextView

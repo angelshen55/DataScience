@@ -40,7 +40,7 @@ class NavigationDrawerFragment : Fragment() {
         with(binding) {
             //Set onclick listener for views that navigate based on their Id matching a navigation graph destination
             val navButtons =
-                setOf(navInStock, navNeeded, navAllItems, navHistory, navSettings, navAllShops, navAbout)
+                setOf(navInStock, navNeeded, navAllItems, navPhotos, navSettings, navAllShops, navAbout)
 
             for (view in navButtons) {
                 view.setOnClickListener {
