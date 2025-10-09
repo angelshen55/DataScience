@@ -66,7 +66,6 @@ class PhotosFragment : Fragment() {
 
 
     private lateinit var photosRecycler: RecyclerView
-    private val historyAdapter = SimpleRecordAdapter()
     private val photosAdapter = PhotoAdapter { photoPath ->
         deletePhoto(photoPath)
     }
@@ -137,7 +136,6 @@ class PhotosFragment : Fragment() {
 
         setupRecyclerViews()
         setupClickListeners()
-        loadHistory()
         loadPhotos()
     }
 
@@ -160,12 +158,7 @@ class PhotosFragment : Fragment() {
         }
     }
 
-    private fun loadHistory() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val data: List<Record> = recordRepository.getAll()
-            historyAdapter.submit(data, productRepository)
-        }
-    }
+
 
     private fun loadPhotos() {
         viewLifecycleOwner.lifecycleScope.launch {
