@@ -5,36 +5,49 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.aisleron.R
-import com.aisleron.domain.record.Record
-import com.aisleron.domain.record.RecordRepository
-import com.aisleron.domain.product.ProductRepository
-import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
+import com.google.android.material.tabs.TabLayoutMediator
 
+/**
+ * History Page Main Fragment
+ */
 class HistoryFragment : Fragment() {
+    
+    // UI
+    private lateinit var viewPager: androidx.viewpager2.widget.ViewPager2
+    private lateinit var tabLayout: com.google.android.material.tabs.TabLayout
 
-    private val recordRepository: RecordRepository by inject()
-    private val productRepository: ProductRepository by inject()
-    private lateinit var recycler: RecyclerView
-    private val adapter = SimpleRecordAdapter()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val v = inflater.inflate(R.layout.fragment_history, container, false)
-        recycler = v.findViewById(R.id.recycler_history)
-        recycler.layoutManager = LinearLayoutManager(requireContext())
-        recycler.adapter = adapter
-        return v
+    override fun onCreateView(
+        inflater: LayoutInflater, 
+        container: ViewGroup?, 
+        savedInstanceState: Bundle?
+    ): View {
+        return inflater.inflate(R.layout.fragment_history_with_tabs, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewLifecycleOwner.lifecycleScope.launch {
-            val data: List<Record> = recordRepository.getAll()
-            adapter.submit(data, productRepository)
-        }
+        
+        viewPager = view.findViewById(R.id.view_pager)
+        tabLayout = view.findViewById(R.id.tab_layout)
+        
+        viewPager.adapter = HistoryPagerAdapter(requireActivity())
+        
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "Purchase History"  
+                1 -> "Price History"     
+                else -> ""
+            }
+        }.attach()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        tabLayout.setTabTextColors(
+            android.graphics.Color.WHITE,
+            android.graphics.Color.WHITE
+        )
     }
 }

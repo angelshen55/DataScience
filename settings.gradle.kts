@@ -15,6 +15,14 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS) // 或 PREFER_SETTINGS
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") } // 添加 JitPack 仓库
+    }
+}
 
 rootProject.name = "Aisleron"
 include(":app")

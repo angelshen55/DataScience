@@ -24,27 +24,34 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Manual Room migrations.
  */
 val MIGRATION_4_5: Migration = object : Migration(4, 5) {
-    override fun migrate(database: SupportSQLiteDatabase) {
+    override fun migrate(db: SupportSQLiteDatabase) {
         // Add non-null price column with default to existing Product table
-        database.execSQL(
+        db.execSQL(
             "ALTER TABLE `Product` ADD COLUMN `price` REAL NOT NULL DEFAULT 0.0"
         )
     }
 }
 
 val MIGRATION_5_6: Migration = object : Migration(5, 6) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        // Create Record table
-        database.execSQL(
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Create Record table with quantity and shop columns
+        db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS `Record` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 `product_id` INTEGER NOT NULL,
                 `date` INTEGER NOT NULL,
                 `stock` INTEGER NOT NULL,
-                `price` REAL NOT NULL
+                `price` REAL NOT NULL,
+                `quantity` INTEGER NOT NULL DEFAULT 1,
+                `shop` TEXT NOT NULL DEFAULT 'shop1'
             )
             """.trimIndent()
+        )
+
+        // Add isDeleted column to Product table for soft delete
+        db.execSQL(
+            "ALTER TABLE `Product` ADD COLUMN `isDeleted` INTEGER NOT NULL DEFAULT 0"
         )
     }
 }

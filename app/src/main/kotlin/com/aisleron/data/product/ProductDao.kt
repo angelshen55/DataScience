@@ -31,14 +31,20 @@ interface ProductDao : BaseDao<ProductEntity> {
     @Query("SELECT * FROM Product WHERE id = :productId")
     suspend fun getProduct(productId: Int): ProductEntity?
 
+    @Query("SELECT * FROM Product WHERE isDeleted = 0")
+    suspend fun getActiveProducts(): List<ProductEntity>
+
     @Query("SELECT * FROM Product")
-    suspend fun getProducts(): List<ProductEntity>
+    suspend fun getAllProductsIncludingDeleted(): List<ProductEntity>
+
+    @Query("UPDATE Product SET isDeleted = 1 WHERE id = :productId")
+    suspend fun softDelete(productId: Int)
 
     @Transaction
     suspend fun remove(product: ProductEntity, aisleProductDao: AisleProductDao) {
         val aisleProducts = aisleProductDao.getAisleProductsByProduct(product.id)
         aisleProductDao.delete(*aisleProducts.map { it.aisleProduct }.toTypedArray())
-        delete(product)
+        softDelete(product.id)
     }
 
     @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE")

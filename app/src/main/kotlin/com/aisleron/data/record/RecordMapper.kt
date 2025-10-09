@@ -26,7 +26,9 @@ class RecordMapper : MapperBaseImpl<RecordEntity, Record>() {
         productId = value.productId,
         date = value.date,
         stock = value.stock,
-        price = value.price
+        price = value.price,
+        quantity = value.quantity,
+        shop = value.shop
     )
 
     override fun fromModel(value: Record) = RecordEntity(
@@ -34,6 +36,8 @@ class RecordMapper : MapperBaseImpl<RecordEntity, Record>() {
         productId = value.productId,
         date = value.date,
         stock = value.stock,
-        price = value.price
+        price = value.price,
+        quantity = value.quantity,
+        shop = value.shop
     )
 }
