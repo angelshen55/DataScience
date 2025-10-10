@@ -15,6 +15,9 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 /**
  * Expandable product-price adapter
@@ -110,11 +113,28 @@ class ProductPriceHistoryAdapter : RecyclerView.Adapter<ProductPriceHistoryAdapt
         chart.isDragEnabled = true
         chart.setScaleEnabled(true)
         chart.setPinchZoom(true)
+
+        if (records.isNotEmpty()) {
+        val sortedRecords = records.sortedBy { it.date }
+        
+        // 计算日期范围，用于X轴坐标
+        val startDate = sortedRecords.first().date.time.toFloat()
+        val dateRange = if (sortedRecords.size > 1) {
+            (sortedRecords.last().date.time - sortedRecords.first().date.time).toFloat()
+        } else 1f
         
         // X
         val xAxis = chart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
+        xAxis.valueFormatter = object : ValueFormatter() {
+            private val dateFormat = SimpleDateFormat("MM/dd", Locale.getDefault())
+            override fun getFormattedValue(value: Float): String {
+                val date = java.util.Date(value.toLong())
+                return dateFormat.format(date)
+            }
+        }
+        xAxis.setLabelCount(minOf(sortedRecords.size, 6), true)
         
         // Y
         chart.axisLeft.setDrawGridLines(true)
@@ -122,24 +142,21 @@ class ProductPriceHistoryAdapter : RecyclerView.Adapter<ProductPriceHistoryAdapt
         
         chart.legend.isEnabled = true
         
-        if (records.isNotEmpty()) {
-            val sortedRecords = records.sortedBy { it.date }
-            
-            val entries = sortedRecords.mapIndexed { index, record ->
-                Entry(index.toFloat(), record.price.toFloat())
-            }
+        val entries = sortedRecords.map { record ->
+            Entry(record.date.time.toFloat(), record.price.toFloat())
+        }
 
-            val dataSet = LineDataSet(entries, "$productName Price History")
-            dataSet.color = Color.BLUE
-            dataSet.setCircleColor(Color.BLACK)
-            dataSet.lineWidth = 2f
-            dataSet.circleRadius = 3f
-            dataSet.setDrawValues(false) // hide data value
-            dataSet.valueTextSize = 8f
+        val dataSet = LineDataSet(entries, "$productName Price History")
+        dataSet.color = Color.BLUE
+        dataSet.setCircleColor(Color.BLACK)
+        dataSet.lineWidth = 2f
+        dataSet.circleRadius = 3f
+        dataSet.setDrawValues(false)
+        dataSet.valueTextSize = 8f
 
-            val lineData = LineData(dataSet)
-            chart.data = lineData
-            chart.invalidate()
+        val lineData = LineData(dataSet)
+        chart.data = lineData
+        chart.invalidate()
         }
     }
 
