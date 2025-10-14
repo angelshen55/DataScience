@@ -115,48 +115,47 @@ class ProductPriceHistoryAdapter : RecyclerView.Adapter<ProductPriceHistoryAdapt
         chart.setPinchZoom(true)
 
         if (records.isNotEmpty()) {
-        val sortedRecords = records.sortedBy { it.date }
-        
-        // 计算日期范围，用于X轴坐标
-        val startDate = sortedRecords.first().date.time.toFloat()
-        val dateRange = if (sortedRecords.size > 1) {
-            (sortedRecords.last().date.time - sortedRecords.first().date.time).toFloat()
-        } else 1f
-        
-        // X
-        val xAxis = chart.xAxis
-        xAxis.position = XAxis.XAxisPosition.BOTTOM
-        xAxis.setDrawGridLines(false)
-        xAxis.valueFormatter = object : ValueFormatter() {
-            private val dateFormat = SimpleDateFormat("MM/dd", Locale.getDefault())
-            override fun getFormattedValue(value: Float): String {
-                val date = java.util.Date(value.toLong())
-                return dateFormat.format(date)
+            val sortedRecords = records.sortedBy { it.date }
+
+            // 创建均匀分布的索引点（最多10个）
+            val step = (sortedRecords.size - 1).coerceAtLeast(1) / 9f
+            val indices = (0 until minOf(sortedRecords.size, 10)).map { it * step }
+
+            // X轴配置
+            val xAxis = chart.xAxis
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.setDrawGridLines(false)
+            xAxis.granularity = 1f // 设置最小间隔为1
+            xAxis.valueFormatter = object : ValueFormatter() {
+                private val dateFormat = SimpleDateFormat("MM/dd", Locale.getDefault())
+                override fun getFormattedValue(value: Float): String {
+                    val index = value.toInt().coerceIn(0, sortedRecords.size - 1)
+                    return dateFormat.format(sortedRecords[index].date)
+                }
             }
-        }
-        xAxis.setLabelCount(minOf(sortedRecords.size, 6), true)
-        
-        // Y
-        chart.axisLeft.setDrawGridLines(true)
-        chart.axisRight.isEnabled = false
-        
-        chart.legend.isEnabled = true
-        
-        val entries = sortedRecords.map { record ->
-            Entry(record.date.time.toFloat(), record.price.toFloat())
-        }
+            xAxis.setLabelCount(minOf(sortedRecords.size, 10), true) // 最多10个标签
 
-        val dataSet = LineDataSet(entries, "$productName Price History")
-        dataSet.color = Color.BLUE
-        dataSet.setCircleColor(Color.BLACK)
-        dataSet.lineWidth = 2f
-        dataSet.circleRadius = 3f
-        dataSet.setDrawValues(false)
-        dataSet.valueTextSize = 8f
+            // Y轴配置
+            chart.axisLeft.setDrawGridLines(true)
+            chart.axisRight.isEnabled = false
+            chart.legend.isEnabled = true
 
-        val lineData = LineData(dataSet)
-        chart.data = lineData
-        chart.invalidate()
+            // 创建数据点（使用索引作为X值）
+            val entries = sortedRecords.mapIndexed { index, _ ->
+                Entry(index.toFloat(), sortedRecords[index].price.toFloat())
+            }
+
+            val dataSet = LineDataSet(entries, "$productName Price History")
+            dataSet.color = Color.BLUE
+            dataSet.setCircleColor(Color.BLACK)
+            dataSet.lineWidth = 2f
+            dataSet.circleRadius = 3f
+            dataSet.setDrawValues(false)
+            dataSet.valueTextSize = 8f
+
+            val lineData = LineData(dataSet)
+            chart.data = lineData
+            chart.invalidate()
         }
     }
 
