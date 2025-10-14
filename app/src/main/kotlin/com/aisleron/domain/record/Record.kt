@@ -15,18 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.aisleron.data.product
+package com.aisleron.domain.record
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import java.util.Date
 
-@Entity(tableName = "Product")
-data class ProductEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int,
-    val name: String,
-    val inStock: Boolean,
-    @ColumnInfo(defaultValue = "0") val qtyNeeded: Int,
-    @ColumnInfo(defaultValue = "0.0") val price: Double,
-    @ColumnInfo(defaultValue = "0") val isDeleted: Boolean = false
+data class Record(
+    val id: Int = 0,
+    val productId: Int,
+    val date: Date,
+    val stock: Boolean,
+    val price: Double = 0.0,
+    val quantity: Int = 1,
+    val shop: String = "shop1"
 )

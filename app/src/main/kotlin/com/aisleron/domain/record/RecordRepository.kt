@@ -15,18 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.aisleron.data.product
+package com.aisleron.domain.record
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.aisleron.domain.base.BaseRepository
 
-@Entity(tableName = "Product")
-data class ProductEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int,
-    val name: String,
-    val inStock: Boolean,
-    @ColumnInfo(defaultValue = "0") val qtyNeeded: Int,
-    @ColumnInfo(defaultValue = "0.0") val price: Double,
-    @ColumnInfo(defaultValue = "0") val isDeleted: Boolean = false
-)
+interface RecordRepository : BaseRepository<Record> {
+    suspend fun getRecordsByProduct(productId: Int): List<Record>
+    suspend fun getRecordsByDateRange(startDate: Long, endDate: Long): List<Record>
+}

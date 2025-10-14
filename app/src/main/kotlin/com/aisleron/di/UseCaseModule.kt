@@ -207,6 +207,7 @@ val useCaseModule = module {
     factory<UpdateProductUseCase> {
         UpdateProductUseCase(
             productRepository = get(),
+            recordRepository = get(),
             isProductNameUniqueUseCase = get()
         )
     }
@@ -214,6 +215,7 @@ val useCaseModule = module {
     factory<AddProductUseCase> {
         AddProductUseCaseImpl(
             productRepository = get(),
+            recordRepository = get(),
             getDefaultAislesUseCase = get(),
             addAisleProductsUseCase = get(),
             isProductNameUniqueUseCase = get(),

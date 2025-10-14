@@ -24,6 +24,7 @@ import com.aisleron.data.loyaltycard.LocationLoyaltyCardDao
 import com.aisleron.data.loyaltycard.LoyaltyCardDao
 import com.aisleron.data.maintenance.MaintenanceDao
 import com.aisleron.data.product.ProductDao
+import com.aisleron.data.record.RecordDao
 
 interface AisleronDb {
     fun aisleDao(): AisleDao
@@ -33,4 +34,5 @@ interface AisleronDb {
     fun maintenanceDao(): MaintenanceDao
     fun loyaltyCardDao(): LoyaltyCardDao
     fun locationLoyaltyCardDao(): LocationLoyaltyCardDao
+    fun recordDao(): RecordDao
 }
