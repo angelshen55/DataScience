@@ -181,6 +181,9 @@ dependencies {
     //Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
+    //diagrams
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     //Testing
     implementation("androidx.lifecycle:lifecycle-runtime-testing:2.9.2")
     implementation("androidx.test.espresso:espresso-contrib:3.7.0")

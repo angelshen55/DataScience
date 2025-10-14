@@ -21,6 +21,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.Date
+import androidx.room.Ignore
 
 @Entity(tableName = "Record")
 data class RecordEntity(
@@ -28,5 +29,10 @@ data class RecordEntity(
     @ColumnInfo(name = "product_id") val productId: Int,
     val date: Date,
     val stock: Boolean,
-    val price: Double
-)
+    val price: Double,
+    val quantity: Int = 1,
+    val shop: String = "shop1"
+){
+    @Ignore
+    val totalCost: Double = price * quantity
+}

@@ -20,6 +20,18 @@ package com.aisleron.data.record
 import androidx.room.Dao
 import androidx.room.Query
 import com.aisleron.data.base.BaseDao
+import java.util.Date
+
+data class RecordWithProductUi(
+    val recordId: Int,
+    val productId: Int,
+    val productName: String,
+    val unitPrice: Double,
+    val quantity: Int,
+    val shop: String,
+    val totalCost: Double,
+    val date: Date
+)
 
 @Dao
 interface RecordDao : BaseDao<RecordEntity> {
@@ -37,4 +49,20 @@ interface RecordDao : BaseDao<RecordEntity> {
 
     @Query("SELECT * FROM Record WHERE date BETWEEN :startDate AND :endDate")
     suspend fun getRecordsByDateRange(startDate: Long, endDate: Long): List<RecordEntity>
+
+    @Query("""
+    SELECT
+        r.id AS recordId,
+        r.product_id AS productId,
+        COALESCE(p.name, 'Unknown Product') AS productName,
+        r.price AS unitPrice,
+        r.quantity AS quantity,
+        r.shop AS shop,
+        (r.quantity * r.price) AS totalCost,
+        r.date AS date
+    FROM Record r
+    LEFT JOIN Product p ON p.id = r.product_id
+    ORDER BY r.date DESC
+    """)
+    suspend fun getHistoryUi(): List<RecordWithProductUi>
 }

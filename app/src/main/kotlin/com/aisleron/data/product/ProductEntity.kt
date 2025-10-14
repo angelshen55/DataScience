@@ -27,5 +27,6 @@ data class ProductEntity(
     val name: String,
     val inStock: Boolean,
     @ColumnInfo(defaultValue = "0") val qtyNeeded: Int,
-    @ColumnInfo(defaultValue = "0.0") val price: Double
+    @ColumnInfo(defaultValue = "0.0") val price: Double,
+    @ColumnInfo(defaultValue = "0") val isDeleted: Boolean = false
 )

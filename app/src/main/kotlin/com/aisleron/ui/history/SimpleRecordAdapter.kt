@@ -34,10 +34,10 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val r = items[position]
+
         holder.title.text = "Loading... • ${df.format(r.date)}"
-        holder.sub.text = "Stock=${r.stock}  Price=${r.price}"
+        holder.sub.text = "Qty: ${r.quantity} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)} | Stock: ${r.stock}"
         
-        // 异步获取产品名称
         productRepository?.let { repo ->
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -45,11 +45,13 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
                     withContext(Dispatchers.Main) {
                         val productName = product?.name ?: "Unknown Product"
                         holder.title.text = "$productName • ${df.format(r.date)}"
+                        holder.sub.text = "Qty: ${r.quantity} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)} | Stock: ${r.stock}"
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         holder.title.text = "Product #${r.productId} • ${df.format(r.date)}"
-                    }
+                        holder.sub.text = "Qty: ${r.quantity} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)}"
+                    }  
                 }
             }
         }

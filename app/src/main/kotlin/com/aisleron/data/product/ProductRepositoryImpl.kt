@@ -35,7 +35,7 @@ class ProductRepositoryImpl(
     }
 
     override suspend fun getAll(): List<Product> {
-        return productMapper.toModelList(productDao.getProducts())
+        return productMapper.toModelList(productDao.getActiveProducts())
     }
 
     override suspend fun add(item: Product): Int {
@@ -63,5 +63,9 @@ class ProductRepositoryImpl(
 
     override suspend fun remove(item: Product) {
         productDao.remove(productMapper.fromModel(item), aisleProductDao)
+    }
+
+    override suspend fun getAllIncludingDeleted(): List<Product> {
+        return productMapper.toModelList(productDao.getAllProductsIncludingDeleted())
     }
 }
