@@ -25,6 +25,9 @@ import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.record.RecordRepository
+import com.aisleron.domain.record.Record
+import java.util.Date
 
 interface AddProductUseCase {
     suspend operator fun invoke(product: Product, targetAisle: Aisle?): Int
@@ -32,6 +35,7 @@ interface AddProductUseCase {
 
 class AddProductUseCaseImpl(
     private val productRepository: ProductRepository,
+    private val recordRepository: RecordRepository,
     private val getDefaultAislesUseCase: GetDefaultAislesUseCase,
     private val addAisleProductsUseCase: AddAisleProductsUseCase,
     private val isProductNameUniqueUseCase: IsProductNameUniqueUseCase,
@@ -55,6 +59,13 @@ class AddProductUseCaseImpl(
 
         val newProduct = product.copy(id = productRepository.add(product))
         val defaultAisles = getDefaultAislesUseCase().toMutableList()
+
+        recordRepository.add(Record(
+            productId = newProduct.id,
+            date = Date(),
+            stock = newProduct.inStock,
+            price = newProduct.price
+        ))
 
         targetAisle?.let { target ->
             defaultAisles.removeIf { it.locationId == target.locationId }

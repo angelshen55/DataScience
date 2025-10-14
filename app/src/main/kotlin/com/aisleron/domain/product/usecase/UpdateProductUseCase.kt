@@ -20,17 +20,33 @@ package com.aisleron.domain.product.usecase
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.record.RecordRepository
+import com.aisleron.domain.record.Record
+import java.util.Date
 
 class UpdateProductUseCase(
     private val productRepository: ProductRepository,
+    private val recordRepository: RecordRepository,
     private val isProductNameUniqueUseCase: IsProductNameUniqueUseCase
 ) {
     suspend operator fun invoke(product: Product) {
+
+        val oldProduct = productRepository.get(product.id)
 
         if (!isProductNameUniqueUseCase(product)) {
             throw AisleronException.DuplicateProductNameException("Product Name must be unique")
         }
 
         productRepository.update(product)
+
+        if (oldProduct != null && 
+            (oldProduct.price != product.price || oldProduct.inStock != product.inStock)) {
+            recordRepository.add(Record(
+                productId = product.id,
+                date = Date(),
+                stock = product.inStock,
+                price = product.price
+            ))
+        }
     }
 }

@@ -27,6 +27,7 @@
     <string name="menu_in_stock">Home Stock</string>
     <string name="menu_needed">Needed</string>
     <string name="menu_all_items">All Items</string>
+    <string name="menu_history">History</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_all_shops">All Shops</string>
     <string name="menu_shops">Shops</string>

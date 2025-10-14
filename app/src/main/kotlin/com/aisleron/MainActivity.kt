@@ -113,7 +113,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_needed,
                 R.id.nav_all_items,
                 R.id.nav_all_shops,
-                R.id.nav_shopping_list
+                R.id.nav_shopping_list,
+                R.id.nav_history
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)

@@ -17,9 +17,10 @@
 
 package com.aisleron.data
 
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.aisleron.data.converters.DateConverters
 import com.aisleron.data.aisle.AisleDao
 import com.aisleron.data.aisle.AisleEntity
 import com.aisleron.data.aisleproduct.AisleProductDao
@@ -33,6 +34,8 @@ import com.aisleron.data.loyaltycard.LoyaltyCardEntity
 import com.aisleron.data.maintenance.MaintenanceDao
 import com.aisleron.data.product.ProductDao
 import com.aisleron.data.product.ProductEntity
+import com.aisleron.data.record.RecordEntity
+import com.aisleron.data.record.RecordDao
 
 @Database(
     entities = [
@@ -41,17 +44,13 @@ import com.aisleron.data.product.ProductEntity
         ProductEntity::class,
         AisleProductEntity::class,
         LoyaltyCardEntity::class,
-        LocationLoyaltyCardEntity::class
+        LocationLoyaltyCardEntity::class,
+        RecordEntity::class
     ],
 
-    version = 5,
-    autoMigrations = [
-        AutoMigration(from = 1, to = 2),
-        AutoMigration(from = 2, to = 3),
-        AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5)
-    ]
+    version = 6
 )
+@TypeConverters(DateConverters::class)
 abstract class AisleronDatabase : AisleronDb, RoomDatabase() {
     abstract override fun aisleDao(): AisleDao
     abstract override fun locationDao(): LocationDao
@@ -60,4 +59,5 @@ abstract class AisleronDatabase : AisleronDb, RoomDatabase() {
     abstract override fun maintenanceDao(): MaintenanceDao
     abstract override fun loyaltyCardDao(): LoyaltyCardDao
     abstract override fun locationLoyaltyCardDao(): LocationLoyaltyCardDao
+    abstract override fun recordDao(): RecordDao
 }

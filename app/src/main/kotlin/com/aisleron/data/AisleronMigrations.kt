@@ -32,3 +32,20 @@ val MIGRATION_4_5: Migration = object : Migration(4, 5) {
     }
 }
 
+val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // Create Record table
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `Record` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `product_id` INTEGER NOT NULL,
+                `date` INTEGER NOT NULL,
+                `stock` INTEGER NOT NULL,
+                `price` REAL NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
