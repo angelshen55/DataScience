@@ -70,6 +70,8 @@ import android.widget.EditText
 import android.widget.TextView
 
 
+// Photo upload and recognize text from image
+
 class PhotosFragment : Fragment() {
     private val recordRepository: RecordRepository by inject()
     private val productRepository: ProductRepository by inject()
