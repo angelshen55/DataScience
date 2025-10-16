@@ -55,6 +55,19 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.content.Context
+import com.google.android.material.button.MaterialButton
+import android.widget.EditText
+import android.widget.TextView
 
 
 class PhotosFragment : Fragment() {
@@ -66,9 +79,14 @@ class PhotosFragment : Fragment() {
 
 
     private lateinit var photosRecycler: RecyclerView
-    private val photosAdapter = PhotoAdapter { photoPath ->
+    private val photosAdapter = PhotoAdapter (
+        { photoPath ->
         deletePhoto(photoPath)
-    }
+    },
+        onScanTextClick = { photoPath ->
+            scanTextFromPhoto(photoPath)
+        }
+    )
 
     private var currentPhotoPath: String? = null
 
@@ -253,6 +271,8 @@ class PhotosFragment : Fragment() {
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
                 }
 
+//                performOcrOnPhoto(bitmap, file.absolutePath)
+
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT).show()
                     loadPhotos()
@@ -284,6 +304,8 @@ class PhotosFragment : Fragment() {
                 FileOutputStream(file).use { out ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
                 }
+
+//                performOcrOnPhoto(bitmap, file.absolutePath)
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Photo imported successfully", Toast.LENGTH_SHORT).show()
@@ -325,6 +347,187 @@ class PhotosFragment : Fragment() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Error deleting photo: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun scanTextFromPhoto(photoPath: String) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val bitmap = BitmapFactory.decodeFile(photoPath)
+                if (bitmap != null) {
+                    performOcrOnPhoto(bitmap, photoPath)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error scanning text: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun performOcrOnPhoto(bitmap: Bitmap, filePath: String) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val ocrResult = recognizeTextFromBitmap(bitmap, useChineseRecognizer = false)
+
+                withContext(Dispatchers.Main) {
+                    if (ocrResult.isNotBlank()) {
+                        showOcrResult(ocrResult, filePath)
+                    } else {
+                        Toast.makeText(requireContext(), "No text detected in image", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "OCR failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun recognizeTextFromBitmap(
+        bitmap: Bitmap,
+        useChineseRecognizer: Boolean = true
+    ): String = suspendCancellableCoroutine { continuation ->
+        val image = InputImage.fromBitmap(bitmap, 0)
+
+        val recognizer = if (useChineseRecognizer) {
+            TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
+        } else {
+            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        }
+
+        recognizer.process(image)
+            .addOnSuccessListener { visionText ->
+                val recognizedText = visionText.text
+                continuation.resume(recognizedText)
+            }
+            .addOnFailureListener { exception ->
+                continuation.resumeWithException(exception)
+            }
+
+        continuation.invokeOnCancellation {
+            recognizer.close()
+        }
+    }
+
+
+    private fun showOcrResult(recognizedText: String, filePath: String) {
+        // 创建自定义对话框
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_ocr_result, null)
+        val etOcrText = dialogView.findViewById<EditText>(R.id.et_ocr_text)
+        val tvSelectionInfo = dialogView.findViewById<TextView>(R.id.tv_selection_info)
+        val btnCopyAll = dialogView.findViewById<MaterialButton>(R.id.btn_copy_all)
+        val btnCopySelected = dialogView.findViewById<MaterialButton>(R.id.btn_copy_selected)
+        val btnClose = dialogView.findViewById<MaterialButton>(R.id.btn_close)
+
+        // 设置OCR文本
+        etOcrText.setText(recognizedText)
+
+        // 默认情况下禁用复制选中按钮
+        btnCopySelected.isEnabled = false
+
+        // 监听文本选择变化
+        etOcrText.setOnClickListener {
+            updateSelectionInfo(etOcrText, tvSelectionInfo, btnCopySelected)
+        }
+
+        etOcrText.setOnLongClickListener {
+            updateSelectionInfo(etOcrText, tvSelectionInfo, btnCopySelected)
+            false
+        }
+
+        // 创建对话框
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+
+        // 设置窗口背景
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        // 按钮点击事件
+        btnCopyAll.setOnClickListener {
+            copyTextToClipboard(recognizedText)
+            Toast.makeText(requireContext(), "All text copied to clipboard", Toast.LENGTH_SHORT).show()
+        }
+
+        btnCopySelected.setOnClickListener {
+            val selectedText = getSelectedText(etOcrText)
+            if (selectedText.isNotEmpty()) {
+                copyTextToClipboard(selectedText)
+                Toast.makeText(requireContext(), "Selected text copied to clipboard", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // 显示对话框
+        dialog.show()
+
+        // 设置对话框大小
+        val displayMetrics = resources.displayMetrics
+        val width = (displayMetrics.widthPixels * 0.9).toInt()
+        val height = (displayMetrics.heightPixels * 0.8).toInt()
+        dialog.window?.setLayout(width, height)
+    }
+
+    private fun updateSelectionInfo(
+        editText: EditText,
+        selectionInfo: TextView,
+        copySelectedButton: MaterialButton
+    ) {
+        val selectedText = getSelectedText(editText)
+        if (selectedText.isNotEmpty()) {
+            val charCount = selectedText.length
+            val wordCount = selectedText.split("\\s+".toRegex()).count { it.isNotEmpty() }
+            selectionInfo.text = "Selected: $charCount characters, $wordCount words"
+            copySelectedButton.isEnabled = true
+        } else {
+            selectionInfo.text = "No text selected"
+            copySelectedButton.isEnabled = false
+        }
+    }
+
+    private fun getSelectedText(editText: EditText): String {
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+        return if (start >= 0 && end >= 0 && start != end) {
+            editText.text.substring(start, end)
+        } else {
+            ""
+        }
+    }
+
+    private fun copyTextToClipboard(text: String) {
+        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("OCR Text", text)
+        clipboard.setPrimaryClip(clip)
+    }
+
+    private fun saveOcrResultToFile(text: String, imagePath: String) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val imageFile = File(imagePath)
+                val textFileName = imageFile.nameWithoutExtension + "_ocr.txt"
+                val textFile = File(imageFile.parent, textFileName)
+
+                textFile.writeText(text)
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "OCR result saved to: ${textFile.name}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error saving OCR result: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

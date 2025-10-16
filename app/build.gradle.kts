@@ -184,6 +184,10 @@ dependencies {
     //diagrams
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    //ML Kit for OCR
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+
     //Testing
     implementation("androidx.lifecycle:lifecycle-runtime-testing:2.9.2")
     implementation("androidx.test.espresso:espresso-contrib:3.7.0")
