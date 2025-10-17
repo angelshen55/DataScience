@@ -35,12 +35,13 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class PhotoAdapter(
-    private val onDeleteClick: (String) -> Unit
+    private val onDeleteClick: (String) -> Unit,
+    private val onScanTextClick: (String) -> Unit
 ) : ListAdapter<String, PhotoAdapter.PhotoViewHolder>(PhotoDiffCallback()) {
 
     class PhotoViewHolder(private val binding: ItemPhotoBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(photoPath: String, onDeleteClick: (String) -> Unit) {
+        fun bind(photoPath: String, onDeleteClick: (String) -> Unit, onScanTextClick: (String) -> Unit) {
             // Load and display the photo
             val bitmap = BitmapFactory.decodeFile(photoPath)
             binding.ivPhoto.setImageBitmap(bitmap)
@@ -55,6 +56,11 @@ class PhotoAdapter(
             binding.btnDeletePhoto.setOnClickListener {
                 onDeleteClick(photoPath)
             }
+
+            // Set Scan Text button
+            binding.btnScanText.setOnClickListener {
+                onScanTextClick(photoPath)
+            }
         }
     }
 
@@ -64,7 +70,7 @@ class PhotoAdapter(
     }
 
     override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
-        holder.bind(getItem(position), onDeleteClick)
+        holder.bind(getItem(position), onDeleteClick, onScanTextClick)
     }
 
     class PhotoDiffCallback : DiffUtil.ItemCallback<String>() {
