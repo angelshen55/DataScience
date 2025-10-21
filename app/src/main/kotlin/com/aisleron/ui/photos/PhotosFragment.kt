@@ -90,16 +90,16 @@ class PhotosFragment : Fragment() {
         }
     )
 
-    private var currentPhotoPath: String? = null
 
     // Activity result launchers
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            currentPhotoPath?.let { path ->
-                savePhotoToGallery(path)
-                loadPhotos()
+            result.data?.extras?.get("data")?.let { photo ->
+                if (photo is Bitmap) {
+                    savePhotoFromBitmap(photo)
+                }
             }
         }
     }
@@ -226,16 +226,8 @@ class PhotosFragment : Fragment() {
     private fun takePicture() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         intent.resolveActivity(requireContext().packageManager)?.let {
-            val photoFile = createImageFile()
-            photoFile?.let { file ->
-                val photoURI = FileProvider.getUriForFile(
-                    requireContext(),
-                    "${requireContext().packageName}.fileprovider",
-                    file
-                )
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                takePictureLauncher.launch(intent)
-            }
+            // Don't specify EXTRA_OUTPUT - this will return the photo as a thumbnail in the result
+            takePictureLauncher.launch(intent)
         }
     }
 
@@ -244,22 +236,10 @@ class PhotosFragment : Fragment() {
         selectImageLauncher.launch(intent)
     }
 
-    private fun createImageFile(): File? {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val storageDir = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "AisleronPhotos")
-        if (!storageDir.exists()) {
-            storageDir.mkdirs()
-        }
 
-        val imageFile = File(storageDir, "AISLERON_${timeStamp}.jpg")
-        currentPhotoPath = imageFile.absolutePath
-        return imageFile
-    }
-
-    private fun savePhotoToGallery(photoPath: String) {
+    private fun savePhotoFromBitmap(bitmap: Bitmap) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val bitmap = BitmapFactory.decodeFile(photoPath)
                 val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 val fileName = "AISLERON_${timeStamp}.jpg"
 
@@ -273,10 +253,8 @@ class PhotosFragment : Fragment() {
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
                 }
 
-//                performOcrOnPhoto(bitmap, file.absolutePath)
-
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Photo captured successfully", Toast.LENGTH_SHORT).show()
                     loadPhotos()
                 }
             } catch (e: Exception) {
