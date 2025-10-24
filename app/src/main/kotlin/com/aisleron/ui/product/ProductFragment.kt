@@ -28,6 +28,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
 import androidx.core.view.doOnLayout
+import com.aisleron.utils.PriceInputUtils
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -101,7 +102,11 @@ class ProductFragment(
                         // Update price field
                         val priceText = if (data.price == 0.0) "" else data.price.toString()
                         if (binding.edtProductPrice.text.toString() != priceText) {
-                            binding.edtProductPrice.setText(priceText)
+                            if (data.price == 0.0) {
+                                binding.edtProductPrice.setText("")
+                            } else {
+                                PriceInputUtils.setPriceText(binding.edtProductPrice, data.price)
+                            }
                         }
 
                         // Update CheckedTextView
@@ -137,8 +142,9 @@ class ProductFragment(
             }
         }
 
-        binding.edtProductPrice.doAfterTextChanged {
-            val newText = it?.toString() ?: ""
+        // Set up Enter key listener for price updates
+        PriceInputUtils.setupPriceEnterListenerWithIme(binding.edtProductPrice) {
+            val newText = binding.edtProductPrice.text.toString()
             val price = newText.toDoubleOrNull() ?: 0.0
             if (productViewModel.uiData.value.price != price) {
                 productViewModel.updatePrice(price)

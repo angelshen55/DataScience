@@ -28,6 +28,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
 import android.view.ViewConfiguration
+import com.aisleron.utils.PriceInputUtils
 import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.EditText
@@ -299,13 +300,12 @@ class ShoppingListItemRecyclerViewAdapter(
                 priceWatcher = null
             }
 
-            // 设置价格值，格式化为2位小数
-            priceEdit.setText(String.format("%.2f", item.price))
-            priceEdit.setSelection(priceEdit.text?.length ?: 0)
+            // 设置价格值，格式化为2位小数，不改变光标位置
+            PriceInputUtils.setPriceText(priceEdit, item.price)
 
-            // Add a new price watcher and keep reference
-            priceWatcher = priceEdit.doAfterTextChanged { editable ->
-                val newPrice = editable?.toString()?.toDoubleOrNull() ?: 0.0
+            // Set up Enter key listener for price updates
+            PriceInputUtils.setupPriceEnterListenerWithIme(priceEdit) {
+                val newPrice = priceEdit.text.toString().toDoubleOrNull() ?: 0.0
                 listener.onProductPriceChange(item, newPrice)
             }
 
