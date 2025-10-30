@@ -20,6 +20,7 @@ package com.aisleron.ui.product
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aisleron.domain.aisle.usecase.GetAisleUseCase
+import com.aisleron.domain.aisle.usecase.GetDefaultAisleForLocationUseCase
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.usecase.AddProductUseCase
@@ -35,6 +36,7 @@ class ProductViewModel(
     private val updateProductUseCase: UpdateProductUseCase,
     private val getProductUseCase: GetProductUseCase,
     private val getAisleUseCase: GetAisleUseCase,
+    private val getDefaultAisleForLocationUseCase: GetDefaultAisleForLocationUseCase,
     coroutineScopeProvider: CoroutineScope? = null
 ) : ViewModel() {
     private var _aisleId: Int? = null
@@ -89,7 +91,9 @@ class ProductViewModel(
 
             _productUiState.value = ProductUiState.Loading
             try {
-                val aisle = _aisleId?.let { getAisleUseCase(it) }
+                val aisle = _aisleId?.let { getAisleUseCase(it) } ?: _locationId?.let { locId ->
+                    getDefaultAisleForLocationUseCase(locId)
+                }
                 product?.let {
                     val updated = it.copy(name = name, inStock = inStock, price = price)
                     updateProductUseCase(updated)

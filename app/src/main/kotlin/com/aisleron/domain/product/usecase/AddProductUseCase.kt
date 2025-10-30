@@ -67,12 +67,9 @@ class AddProductUseCaseImpl(
             price = newProduct.price
         ))
 
-        targetAisle?.let { target ->
-            defaultAisles.removeIf { it.locationId == target.locationId }
-            defaultAisles.add(target)
-        }
+        val aislesToAdd = targetAisle?.let { listOf(it) } ?: defaultAisles
 
-        addAisleProductsUseCase(defaultAisles.map {
+        addAisleProductsUseCase(aislesToAdd.map {
             AisleProduct(
                 aisleId = it.id,
                 product = newProduct,

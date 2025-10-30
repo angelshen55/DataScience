@@ -23,6 +23,7 @@ import com.aisleron.domain.aisleproduct.AisleProduct
 import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.location.Location
+import com.aisleron.domain.location.LocationType
 import com.aisleron.domain.location.LocationRepository
 import com.aisleron.domain.product.usecase.GetAllProductsUseCase
 
@@ -50,10 +51,11 @@ class AddLocationUseCaseImpl(
 
         val newLocationId = locationRepository.add(location)
         //Add location default Aisle. Set Rank high so it shows at the end of the shopping list
+        val defaultAisleName = if (location.type == LocationType.SHOP) location.name else "No Aisle"
         val newAisleId = addAisleUseCase(
             Aisle(
                 id = 0,
-                name = "No Aisle",
+                name = defaultAisleName,
                 locationId = newLocationId,
                 rank = 1000,
                 isDefault = true,
