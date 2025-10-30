@@ -22,4 +22,6 @@ import com.aisleron.domain.base.BaseRepository
 interface ProductRepository : BaseRepository<Product> {
     suspend fun getByName(name: String): Product?
     suspend fun getAllIncludingDeleted(): List<Product>
+    suspend fun getDeletedByName(name: String): Product?
+    suspend fun restore(item: Product)
 }

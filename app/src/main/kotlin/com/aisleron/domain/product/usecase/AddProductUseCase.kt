@@ -45,6 +45,34 @@ class AddProductUseCaseImpl(
 ) : AddProductUseCase {
     override suspend operator fun invoke(product: Product, targetAisle: Aisle?): Int {
 
+        productRepository.getDeletedByName(product.name)?.let { deleted ->
+            val revived = product.copy(id = deleted.id)
+            productRepository.restore(revived)
+            productRepository.update(revived)
+
+            recordRepository.add(
+                Record(
+                    productId = revived.id,
+                    date = Date(),
+                    stock = revived.inStock,
+                    price = revived.price
+                )
+            )
+
+            val aislesToAdd = targetAisle?.let { listOf(it) } ?: getDefaultAislesUseCase().toMutableList()
+            addAisleProductsUseCase(
+                aislesToAdd.map {
+                    AisleProduct(
+                        aisleId = it.id,
+                        product = revived,
+                        rank = getAisleMaxRankUseCase(it) + 1,
+                        id = 0
+                    )
+                }
+            )
+            return revived.id
+        }
+
         if (!isProductNameUniqueUseCase(product)) {
             throw AisleronException.DuplicateProductNameException("Product Name must be unique")
         }
