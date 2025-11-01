@@ -104,6 +104,16 @@
             android:text="Copy Selected"
             app:icon="@android:drawable/ic_menu_edit" />
 
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btn_import_history"-->
+<!--            style="@style/Widget.Material3.Button"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="1"-->
+<!--            android:layout_marginEnd="8dp"-->
+<!--            android:text="Import"-->
+<!--            app:icon="@android:drawable/ic_menu_upload" />-->
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_close"
             style="@style/Widget.Material3.Button.TextButton"
