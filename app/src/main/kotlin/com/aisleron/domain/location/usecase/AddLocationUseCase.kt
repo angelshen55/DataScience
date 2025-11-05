@@ -64,15 +64,19 @@ class AddLocationUseCaseImpl(
             )
         )
 
-        addAisleProductsUseCase(
-            getAllProductsUseCase().sortedBy { it.name }.mapIndexed { _, p ->
-                AisleProduct(
-                    rank = 0,
-                    aisleId = newAisleId,
-                    product = p,
-                    id = 0
-                )
-            })
+        // Do not auto-copy products into the default aisle when creating a new SHOP
+        if (location.type != LocationType.SHOP) {
+            addAisleProductsUseCase(
+                getAllProductsUseCase().sortedBy { it.name }.mapIndexed { _, p ->
+                    AisleProduct(
+                        rank = 0,
+                        aisleId = newAisleId,
+                        product = p,
+                        id = 0
+                    )
+                }
+            )
+        }
 
         return newLocationId
     }

@@ -210,7 +210,9 @@ val useCaseModule = module {
         UpdateProductUseCase(
             productRepository = get(),
             recordRepository = get(),
-            isProductNameUniqueUseCase = get()
+            isProductNameUniqueUseCase = get(),
+            getDefaultAislesUseCase = get(),
+            getLocationUseCase = get()
         )
     }
 
@@ -222,7 +224,11 @@ val useCaseModule = module {
             addAisleProductsUseCase = get(),
             isProductNameUniqueUseCase = get(),
             isPricePositiveUseCase = get(),
-            getAisleMaxRankUseCase = get()
+            getAisleMaxRankUseCase = get(),
+            getLocationUseCase = get(),
+            getHomeLocationUseCase = get(),
+            addAisleUseCase = get(),
+            aisleRepository = get()
         )
     }
 
