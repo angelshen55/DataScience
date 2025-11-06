@@ -15,13 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.aisleron.domain.product
+package com.aisleron.domain.aisle.usecase
 
-import com.aisleron.domain.base.BaseRepository
+import com.aisleron.domain.aisle.Aisle
+import com.aisleron.domain.aisle.AisleRepository
 
-interface ProductRepository : BaseRepository<Product> {
-    suspend fun getByName(name: String): Product?
-    suspend fun getAllIncludingDeleted(): List<Product>
-    suspend fun getDeletedByName(name: String): Product?
-    suspend fun restore(item: Product)
+class GetDefaultAisleForLocationUseCase(private val aisleRepository: AisleRepository) {
+    suspend operator fun invoke(locationId: Int): Aisle? {
+        return aisleRepository.getDefaultAisleFor(locationId)
+    }
 }
+
+
