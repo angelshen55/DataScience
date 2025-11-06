@@ -17,6 +17,7 @@
 
 package com.aisleron.testdata.data.product
 
+import com.aisleron.data.aisleproduct.AisleProductDao
 import com.aisleron.data.product.ProductDao
 import com.aisleron.data.product.ProductEntity
 
@@ -40,7 +41,9 @@ class ProductDaoTestImpl : ProductDao {
                 id = id,
                 name = it.name,
                 inStock = it.inStock,
-                qtyNeeded = it.qtyNeeded
+                qtyNeeded = it.qtyNeeded,
+                price = it.price,
+                isDeleted = it.isDeleted
             )
 
             productList.add(newEntity)
@@ -57,8 +60,27 @@ class ProductDaoTestImpl : ProductDao {
         return productList.find { it.id == productId }
     }
 
-    override suspend fun getProducts(): List<ProductEntity> {
+    override suspend fun getActiveProducts(): List<ProductEntity> {
+        return productList.filter { !it.isDeleted }
+    }
+
+    override suspend fun getAllProductsIncludingDeleted(): List<ProductEntity> {
         return productList
+    }
+
+    override suspend fun softDelete(productId: Int) {
+        val product = getProduct(productId)
+        product?.let {
+            val updatedProduct = it.copy(isDeleted = true)
+            productList.removeAt(productList.indexOf(it))
+            productList.add(updatedProduct)
+        }
+    }
+
+    override suspend fun remove(product: ProductEntity, aisleProductDao: AisleProductDao) {
+        val aisleProducts = aisleProductDao.getAisleProductsByProduct(product.id)
+        aisleProductDao.delete(*aisleProducts.map { it.aisleProduct }.toTypedArray())
+        softDelete(product.id)
     }
 
     override suspend fun getProductByName(name: String): ProductEntity? {

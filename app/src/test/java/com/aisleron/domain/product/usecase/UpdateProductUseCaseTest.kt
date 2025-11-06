@@ -40,7 +40,9 @@ class UpdateProductUseCaseTest {
         val productRepository = testData.getRepository<ProductRepository>()
         existingProduct = runBlocking { productRepository.get(1)!! }
         updateProductUseCase = UpdateProductUseCase(
-            productRepository, IsProductNameUniqueUseCase(productRepository)
+            productRepository,
+            testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
+            IsProductNameUniqueUseCase(productRepository)
         )
     }
 

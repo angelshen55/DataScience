@@ -46,9 +46,11 @@ class AddProductUseCaseTest {
 
         addProductUseCase = AddProductUseCaseImpl(
             productRepository,
+            testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
             GetDefaultAislesUseCase(testData.getRepository<AisleRepository>()),
             AddAisleProductsUseCase(testData.getRepository<AisleProductRepository>()),
             IsProductNameUniqueUseCase(testData.getRepository<ProductRepository>()),
+            IsPricePositiveUseCase(),
             GetAisleMaxRankUseCase(testData.getRepository<AisleProductRepository>())
         )
 

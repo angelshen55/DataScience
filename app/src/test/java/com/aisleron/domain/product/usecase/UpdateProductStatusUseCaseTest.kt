@@ -42,7 +42,11 @@ class UpdateProductStatusUseCaseTest {
         val productRepository = testData.getRepository<ProductRepository>()
         updateProductStatusUseCase = UpdateProductStatusUseCaseImpl(
             GetProductUseCase(productRepository),
-            UpdateProductUseCase(productRepository, IsProductNameUniqueUseCase(productRepository))
+            UpdateProductUseCase(
+                productRepository,
+                testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
+                IsProductNameUniqueUseCase(productRepository)
+            )
         )
     }
 

@@ -44,7 +44,8 @@ class GetCreateSampleDataUseCase {
         locationRepository: LocationRepository,
         aisleRepository: AisleRepository,
         productRepository: ProductRepository,
-        aisleProductRepository: AisleProductRepository
+        aisleProductRepository: AisleProductRepository,
+        recordRepository: com.aisleron.domain.record.RecordRepository
     ): CreateSampleDataUseCase {
         val getShoppingListUseCase = GetShoppingListUseCase(locationRepository)
         val getAllProductsUseCase = GetAllProductsUseCase(productRepository)
@@ -54,9 +55,11 @@ class GetCreateSampleDataUseCase {
 
         val addProductUseCase = AddProductUseCaseImpl(
             productRepository,
+            recordRepository,
             GetDefaultAislesUseCase(aisleRepository),
             addAisleProductsUseCase,
             IsProductNameUniqueUseCase(productRepository),
+            com.aisleron.domain.product.usecase.IsPricePositiveUseCase(),
             GetAisleMaxRankUseCase(aisleProductRepository)
         )
 
