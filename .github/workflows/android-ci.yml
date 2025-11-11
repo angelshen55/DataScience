@@ -69,10 +69,4 @@ jobs:
           name: instrumentation-test-results
           path: app/build/outputs/androidTest-results/connected
 
-      - name: Upload assets to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name}}
-          files: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/mapping/release/mapping.txt
+      
