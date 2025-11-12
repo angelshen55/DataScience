@@ -158,8 +158,10 @@ class DatabaseMigrationTest {
         assertNotNull(loyaltyCards)
 
         // Product.qtyNeeded introduced in V4
-        val product = runBlocking { db.productDao().getProducts().first() }
+//        val product = runBlocking { db.productDao().getProducts().first() }
+        val product = runBlocking { db.productDao().getAllProductsIncludingDeleted().first() }
         assertEquals(0, product.qtyNeeded)
+
 
         db.close()
     }

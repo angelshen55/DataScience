@@ -20,6 +20,7 @@ package com.aisleron.ui.shoppinglist
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.view.menu.ActionMenuItem
@@ -42,6 +43,7 @@ import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.clearText
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
+import androidx.test.espresso.action.ViewActions.pressKey
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -87,6 +89,7 @@ import com.aisleron.ui.loyaltycard.LoyaltyCardProvider
 import com.aisleron.ui.loyaltycard.LoyaltyCardProviderTestImpl
 import com.aisleron.ui.settings.ShoppingListPreferences
 import com.aisleron.ui.settings.ShoppingListPreferencesTestImpl
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -1292,6 +1295,14 @@ class ShoppingListFragmentTest : KoinTest {
             )
         )
 
+    private fun getPriceEditForProduct(product: Product): ViewInteraction =
+        onView(
+            allOf(
+                withId(R.id.edt_price),
+                hasSibling(allOf(withText(product.name), withId(R.id.txt_product_name)))
+            )
+        )
+
     private suspend fun onProductQuantityChange_Arrange(initialQty: Int): Product {
         val shoppingListPrefs = ShoppingListPreferencesTestImpl()
         shoppingListPrefs.setTrackingMode(ShoppingListPreferences.TrackingMode.QUANTITY)
@@ -1369,6 +1380,70 @@ class ShoppingListFragmentTest : KoinTest {
 
         val updatedProduct = get<ProductRepository>().get(product.id)
         assertEquals(initialQty.inc(), updatedProduct?.qtyNeeded)
+    }
+
+    @Test
+    fun onCreateView_PriceEditIsDisplayed() = runTest {
+        val shoppingList = getShoppingList()
+        val shoppingListBundle =
+            bundler.makeShoppingListBundle(shoppingList.id, shoppingList.defaultFilter)
+
+        getFragmentScenario(shoppingListBundle)
+
+        val product = getProduct(shoppingList, false)
+        val priceEdit = getPriceEditForProduct(product)
+        priceEdit.check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun onProductPriceChange_priceEditChangedAndEnterPressed_ProductPriceUpdated() = runTest {
+        val shoppingList = getShoppingList()
+        val shoppingListBundle =
+            bundler.makeShoppingListBundle(shoppingList.id, shoppingList.defaultFilter)
+
+        getFragmentScenario(shoppingListBundle)
+
+        val product = getProduct(shoppingList, false)
+        val initialPrice = product.price
+        val newPrice = 12.50
+
+        val priceEdit = getPriceEditForProduct(product)
+        priceEdit.perform(clearText())
+        priceEdit.perform(typeText(newPrice.toString()))
+        priceEdit.perform(pressKey(KeyEvent.KEYCODE_ENTER))
+
+        // Wait for debounce delay (300ms) plus some buffer
+        delay(400)
+
+        val updatedProduct = get<ProductRepository>().get(product.id)
+        Assert.assertNotNull(updatedProduct)
+        Assert.assertNotNull(updatedProduct?.price)
+        assertEquals(newPrice, updatedProduct!!.price!!, 0.01)
+    }
+
+    @Test
+    fun onProductPriceChange_priceEditChangedWithDecimal_ProductPriceUpdated() = runTest {
+        val shoppingList = getShoppingList()
+        val shoppingListBundle =
+            bundler.makeShoppingListBundle(shoppingList.id, shoppingList.defaultFilter)
+
+        getFragmentScenario(shoppingListBundle)
+
+        val product = getProduct(shoppingList, false)
+        val newPrice = 9.99
+
+        val priceEdit = getPriceEditForProduct(product)
+        priceEdit.perform(clearText())
+        priceEdit.perform(typeText(newPrice.toString()))
+        priceEdit.perform(pressKey(KeyEvent.KEYCODE_ENTER))
+
+        // Wait for debounce delay (300ms) plus some buffer
+        delay(400)
+
+        val updatedProduct = get<ProductRepository>().get(product.id)
+        Assert.assertNotNull(updatedProduct)
+        Assert.assertNotNull(updatedProduct?.price)
+        assertEquals(newPrice, updatedProduct!!.price!!, 0.01)
     }
 
     /*@Test
