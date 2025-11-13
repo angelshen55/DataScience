@@ -50,9 +50,7 @@ interface ProductDao : BaseDao<ProductEntity> {
     @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE")
     suspend fun getProductByName(name: String): ProductEntity?
 
-    @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE AND isDeleted = 1")
-    suspend fun getDeletedProductByName(name: String): ProductEntity?
+    @Query("SELECT * FROM Product")
+    suspend fun getProducts(): List<ProductEntity>
 
-    @Query("UPDATE Product SET isDeleted = 0 WHERE id = :productId")
-    suspend fun restore(productId: Int)
 }
