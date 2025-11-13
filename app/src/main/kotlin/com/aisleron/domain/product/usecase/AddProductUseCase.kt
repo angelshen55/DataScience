@@ -18,11 +18,16 @@
 package com.aisleron.domain.product.usecase
 
 import com.aisleron.domain.aisle.Aisle
+import com.aisleron.domain.aisle.AisleRepository
+import com.aisleron.domain.aisle.usecase.AddAisleUseCase
 import com.aisleron.domain.aisle.usecase.GetDefaultAislesUseCase
 import com.aisleron.domain.aisleproduct.AisleProduct
 import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
 import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
 import com.aisleron.domain.base.AisleronException
+import com.aisleron.domain.location.LocationType
+import com.aisleron.domain.location.usecase.GetHomeLocationUseCase
+import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.record.RecordRepository
@@ -40,10 +45,88 @@ class AddProductUseCaseImpl(
     private val addAisleProductsUseCase: AddAisleProductsUseCase,
     private val isProductNameUniqueUseCase: IsProductNameUniqueUseCase,
     private val isPricePositiveUseCase: IsPricePositiveUseCase,
-    private val getAisleMaxRankUseCase: GetAisleMaxRankUseCase
+    private val getAisleMaxRankUseCase: GetAisleMaxRankUseCase,
+    private val getLocationUseCase: GetLocationUseCase,
+    private val getHomeLocationUseCase: GetHomeLocationUseCase,
+    private val addAisleUseCase: AddAisleUseCase,
+    private val aisleRepository: AisleRepository
 
 ) : AddProductUseCase {
     override suspend operator fun invoke(product: Product, targetAisle: Aisle?): Int {
+
+        productRepository.getDeletedByName(product.name)?.let { deleted ->
+            val revived = product.copy(id = deleted.id)
+            productRepository.restore(revived)
+            productRepository.update(revived)
+
+            // Determine shop name from aisle -> locationId -> location.name
+            val revivedAisle = targetAisle ?: getDefaultAislesUseCase().firstOrNull()
+            val revivedShopName = revivedAisle?.let { aisle ->
+                runCatching { getLocationUseCase(aisle.locationId)?.name }.getOrNull()
+            }
+
+            recordRepository.add(
+                Record(
+                    productId = revived.id,
+                    date = Date(),
+                    stock = revived.inStock,
+                    price = revived.price,
+                    quantity = revived.qtyNeeded,
+                    shop = revivedShopName ?: "None"
+                )
+            )
+
+            val aislesToAdd = targetAisle?.let { listOf(it) } ?: getDefaultAislesUseCase().toMutableList()
+            addAisleProductsUseCase(
+                aislesToAdd.map {
+                    AisleProduct(
+                        aisleId = it.id,
+                        product = revived,
+                        rank = getAisleMaxRankUseCase(it) + 1,
+                        id = 0
+                    )
+                }
+            )
+
+            // Mirror into HOME same-named aisles when created in a SHOP aisle
+            val home = getHomeLocationUseCase()
+            val shopAisleNames = aislesToAdd.mapNotNull { a ->
+                val loc = getLocationUseCase(a.locationId)
+                if (loc?.type == LocationType.SHOP) a.name else null
+            }.distinct()
+
+            if (shopAisleNames.isNotEmpty()) {
+                val homeAisles = aisleRepository.getForLocation(home.id)
+                val targetHomeAisles = shopAisleNames.map { name ->
+                    homeAisles.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: run {
+                        val newId = addAisleUseCase(
+                            Aisle(
+                                id = 0,
+                                name = name,
+                                locationId = home.id,
+                                rank = 1000,
+                                isDefault = false,
+                                products = emptyList(),
+                                expanded = true
+                            )
+                        )
+                        aisleRepository.get(newId)!!
+                    }
+                }
+
+                addAisleProductsUseCase(
+                    targetHomeAisles.map { ha ->
+                        AisleProduct(
+                            aisleId = ha.id,
+                            product = revived,
+                            rank = getAisleMaxRankUseCase(ha) + 1,
+                            id = 0
+                        )
+                    }
+                )
+            }
+            return revived.id
+        }
 
         if (!isProductNameUniqueUseCase(product)) {
             throw AisleronException.DuplicateProductNameException("Product Name must be unique")
@@ -60,26 +143,73 @@ class AddProductUseCaseImpl(
         val newProduct = product.copy(id = productRepository.add(product))
         val defaultAisles = getDefaultAislesUseCase().toMutableList()
 
-        recordRepository.add(Record(
-            productId = newProduct.id,
-            date = Date(),
-            stock = newProduct.inStock,
-            price = newProduct.price
-        ))
-
-        targetAisle?.let { target ->
-            defaultAisles.removeIf { it.locationId == target.locationId }
-            defaultAisles.add(target)
+        // Determine shop name from aisle -> locationId -> location.name
+        val selectedAisle = targetAisle ?: defaultAisles.firstOrNull()
+        val shopName = selectedAisle?.let { aisle ->
+            runCatching { getLocationUseCase(aisle.locationId)?.name }.getOrNull()
         }
 
-        addAisleProductsUseCase(defaultAisles.map {
-            AisleProduct(
-                aisleId = it.id,
-                product = newProduct,
-                rank = getAisleMaxRankUseCase(it) + 1,
-                id = 0
+        recordRepository.add(
+            Record(
+                productId = newProduct.id,
+                date = Date(),
+                stock = newProduct.inStock,
+                price = newProduct.price,
+                quantity = newProduct.qtyNeeded,
+                shop = shopName ?: "None"
             )
-        })
+        )
+
+        val aislesToAdd = targetAisle?.let { listOf(it) } ?: defaultAisles
+
+        addAisleProductsUseCase(
+            aislesToAdd.map {
+                AisleProduct(
+                    aisleId = it.id,
+                    product = newProduct,
+                    rank = getAisleMaxRankUseCase(it) + 1,
+                    id = 0
+                )
+            }
+        )
+
+        // Mirror into HOME same-named aisles when created in a SHOP aisle
+        val home = getHomeLocationUseCase()
+        val shopAisleNames = aislesToAdd.mapNotNull { a ->
+            val loc = getLocationUseCase(a.locationId)
+            if (loc?.type == LocationType.SHOP) a.name else null
+        }.distinct()
+
+        if (shopAisleNames.isNotEmpty()) {
+            val homeAisles = aisleRepository.getForLocation(home.id)
+            val targetHomeAisles = shopAisleNames.map { name ->
+                homeAisles.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: run {
+                    val newId = addAisleUseCase(
+                        Aisle(
+                            id = 0,
+                            name = name,
+                            locationId = home.id,
+                            rank = 1000,
+                            isDefault = false,
+                            products = emptyList(),
+                            expanded = true
+                        )
+                    )
+                    aisleRepository.get(newId)!!
+                }
+            }
+
+            addAisleProductsUseCase(
+                targetHomeAisles.map { ha ->
+                    AisleProduct(
+                        aisleId = ha.id,
+                        product = newProduct,
+                        rank = getAisleMaxRankUseCase(ha) + 1,
+                        id = 0
+                    )
+                }
+            )
+        }
 
         return newProduct.id
     }
