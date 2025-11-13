@@ -18,14 +18,16 @@
 package com.aisleron.domain.product.usecase
 
 import com.aisleron.domain.product.Product
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
 class IsPricePositiveUseCaseTest {
 
@@ -38,8 +40,16 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_ZeroPrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 0.0))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = 0.0
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertTrue(result)
@@ -47,8 +57,16 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_PositivePrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 10.50))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = 10.50
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertTrue(result)
@@ -56,8 +74,16 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_LargePositivePrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 999_999.99))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = 999999.99
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertTrue(result)
@@ -65,8 +91,16 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_SmallPositivePrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 0.01))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = 0.01
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertTrue(result)
@@ -75,8 +109,16 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_NegativePrice_ReturnsFalse() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = -5.0))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = -5.0
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertFalse(result)
@@ -84,29 +126,34 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_LargeNegativePrice_ReturnsFalse() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = -100.50))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = -100.50
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertFalse(result)
     }
 
     @ParameterizedTest(name = "Test price value: {0}, expected: {1}")
-    @CsvSource(
-        "0.0, true",
-        "0.01, true",
-        "1.0, true",
-        "10.5, true",
-        "99.99, true",
-        "100.0, true",
-        "-0.01, false",
-        "-1.0, false",
-        "-10.5, false",
-        "-99.99, false"
-    )
+    @MethodSource("priceTestArguments")
     fun isPricePositive_VariousPrices_ReturnsExpected(price: Double, expected: Boolean) {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = price))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = price
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertEquals(expected, result)
@@ -114,18 +161,34 @@ class IsPricePositiveUseCaseTest {
 
     @Test
     fun isPricePositive_PriceWithManyDecimals_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 12.3456789))
+        val product = Product(
+            id = 1,
+            name = "Test Product",
+            inStock = true,
+            qtyNeeded = 0,
+            price = 12.3456789
+        )
+
+        val result = runBlocking {
+            isPricePositiveUseCase(product)
         }
 
         assertTrue(result)
     }
 
-    private fun createProduct(price: Double) = Product(
-        id = 1,
-        name = "Test Product",
-        inStock = true,
-        qtyNeeded = 0,
-        price = price
-    )
+    private companion object {
+        @JvmStatic
+        fun priceTestArguments(): Stream<Arguments> = Stream.of(
+            Arguments.of(0.0, true),
+            Arguments.of(0.01, true),
+            Arguments.of(1.0, true),
+            Arguments.of(10.50, true),
+            Arguments.of(99.99, true),
+            Arguments.of(100.0, true),
+            Arguments.of(-0.01, false),
+            Arguments.of(-1.0, false),
+            Arguments.of(-10.50, false),
+            Arguments.of(-99.99, false)
+        )
+    }
 }
