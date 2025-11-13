@@ -28,6 +28,7 @@ import com.aisleron.domain.FilterType
 import com.aisleron.domain.location.LocationType
 import junit.framework.TestCase.assertNotNull
 import kotlinx.coroutines.runBlocking
+import kotlin.test.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
@@ -141,6 +142,62 @@ class DatabaseMigrationTest {
 
     @Test
     @Throws(IOException::class)
+    fun migrate4to5() {
+        helper.createDatabase(testDb, 4).apply {
+            insertProductV4(this)
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(testDb, 5, true)
+
+        db.apply {
+            val cursor = query("SELECT price FROM Product WHERE name = ?", arrayOf(PRODUCT_NAME_V4))
+            cursor.moveToFirst()
+            assertEquals(0.0, cursor.getDouble(cursor.getColumnIndex("price")))
+            cursor.close()
+            close()
+        }
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate5to6() {
+        helper.createDatabase(testDb, 5).apply {
+            insertProductV5(this)
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(testDb, 6, true)
+
+        db.apply {
+            val productCursor =
+                query("SELECT id, isDeleted FROM Product WHERE name = ?", arrayOf(PRODUCT_NAME_V5))
+            productCursor.moveToFirst()
+            val productId = productCursor.getInt(productCursor.getColumnIndex("id"))
+            assertEquals(0, productCursor.getInt(productCursor.getColumnIndex("isDeleted")))
+            productCursor.close()
+
+            val recordValues = ContentValues().apply {
+                put("product_id", productId)
+                put("date", System.currentTimeMillis())
+                put("stock", 1)
+                put("price", 1.99)
+            }
+            insert("Record", android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL, recordValues)
+
+            val recordCursor =
+                query("SELECT quantity, shop FROM Record WHERE product_id = ?", arrayOf(productId.toString()))
+            recordCursor.moveToFirst()
+            assertEquals(1, recordCursor.getInt(recordCursor.getColumnIndex("quantity")))
+            assertEquals("shop1", recordCursor.getString(recordCursor.getColumnIndex("shop")))
+            recordCursor.close()
+
+            close()
+        }
+    }
+
+    @Test
+    @Throws(IOException::class)
     fun migrateAll() {
         helper.createDatabase(testDb, 1).apply {
             populateV1Database(this)
@@ -158,9 +215,40 @@ class DatabaseMigrationTest {
         assertNotNull(loyaltyCards)
 
         // Product.qtyNeeded introduced in V4
-        val product = runBlocking { db.productDao().getProducts().first() }
-        assertEquals(0, product.qtyNeeded)
+        val product = runBlocking {
+            db.productDao().getProductByName(LEGACY_PRODUCT_NAME)
+        }
+        assertNotNull(product)
+        val migratedProduct = requireNotNull(product)
+        assertEquals(0, migratedProduct.qtyNeeded)
+        assertEquals(0.0, migratedProduct.price)
+        assertFalse(migratedProduct.isDeleted)
 
         db.close()
+    }
+
+    private fun insertProductV4(db: SupportSQLiteDatabase) {
+        val productValues = ContentValues().apply {
+            put("name", PRODUCT_NAME_V4)
+            put("inStock", true)
+            put("qtyNeeded", 3)
+        }
+        db.insert("Product", android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL, productValues)
+    }
+
+    private fun insertProductV5(db: SupportSQLiteDatabase) {
+        val productValues = ContentValues().apply {
+            put("name", PRODUCT_NAME_V5)
+            put("inStock", true)
+            put("qtyNeeded", 5)
+            put("price", 2.49)
+        }
+        db.insert("Product", android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL, productValues)
+    }
+
+    private companion object {
+        private const val LEGACY_PRODUCT_NAME = "Migration Test Product"
+        private const val PRODUCT_NAME_V4 = "Migration Test Product V4"
+        private const val PRODUCT_NAME_V5 = "Migration Test Product V5"
     }
 }

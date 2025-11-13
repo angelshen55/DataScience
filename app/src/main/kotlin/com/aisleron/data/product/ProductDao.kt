@@ -49,4 +49,8 @@ interface ProductDao : BaseDao<ProductEntity> {
 
     @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE")
     suspend fun getProductByName(name: String): ProductEntity?
+
+    @Query("SELECT * FROM Product")
+    suspend fun getProducts(): List<ProductEntity>
+
 }

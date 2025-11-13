@@ -86,4 +86,8 @@ class ProductDaoTestImpl : ProductDao {
     override suspend fun getProductByName(name: String): ProductEntity? {
         return productList.find { it.name.uppercase() == name.uppercase() }
     }
+
+    override suspend fun getProducts(): List<ProductEntity> {
+        return productList.toList()
+    }
 }
