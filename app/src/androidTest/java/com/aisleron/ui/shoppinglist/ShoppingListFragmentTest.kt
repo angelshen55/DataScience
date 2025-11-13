@@ -1471,4 +1471,47 @@ class ShoppingListFragmentTest : KoinTest {
             Aisle
             Product
      */
+    // additional price tests below
+    @Test
+    fun onProductPriceChange_priceEditCleared_ProductPriceSetToZero() = runTest {
+        val shoppingList = getShoppingList()
+        val shoppingListBundle =
+            bundler.makeShoppingListBundle(shoppingList.id, shoppingList.defaultFilter)
+
+        getFragmentScenario(shoppingListBundle)
+
+        val product = getProduct(shoppingList, false)
+
+        val priceEdit = getPriceEditForProduct(product)
+        priceEdit.perform(clearText())
+        priceEdit.perform(pressKey(KeyEvent.KEYCODE_ENTER))
+
+        delay(400)
+
+        val updatedProduct = get<ProductRepository>().get(product.id)
+        Assert.assertNotNull(updatedProduct)
+        assertEquals(0.0, updatedProduct!!.price, 0.01)
+    }
+
+    @Test
+    fun onProductPriceChange_priceEditInvalidInput_ProductPriceSetToZero() = runTest {
+        val shoppingList = getShoppingList()
+        val shoppingListBundle =
+            bundler.makeShoppingListBundle(shoppingList.id, shoppingList.defaultFilter)
+
+        getFragmentScenario(shoppingListBundle)
+
+        val product = getProduct(shoppingList, false)
+
+        val priceEdit = getPriceEditForProduct(product)
+        priceEdit.perform(clearText())
+        priceEdit.perform(typeText("abc"))
+        priceEdit.perform(pressKey(KeyEvent.KEYCODE_ENTER))
+
+        delay(400)
+
+        val updatedProduct = get<ProductRepository>().get(product.id)
+        Assert.assertNotNull(updatedProduct)
+        assertEquals(0.0, updatedProduct!!.price, 0.01)
+    }
 }
