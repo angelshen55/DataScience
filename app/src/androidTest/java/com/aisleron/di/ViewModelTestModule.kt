@@ -47,8 +47,9 @@ val viewModelTestModule = module {
             sortLocationByNameUseCase = get(),
             getLoyaltyCardForLocationUseCase = get(),
             updateProductQtyNeededUseCase = get(),
+            updateProductPriceUseCase = get(),
             debounceTime = 0,
-            TestScope(UnconfinedTestDispatcher())
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 

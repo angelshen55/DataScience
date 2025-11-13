@@ -203,16 +203,17 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     androidTestImplementation("io.insert-koin:koin-test:4.1.0")
+    androidTestImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("org.hamcrest:hamcrest:2.2")
     androidTestImplementation("androidx.test:core-ktx:1.7.0")
     androidTestImplementation("androidx.navigation:navigation-testing:2.9.3")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
-
-    androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    //org.hamcrest:hamcrest:2.2 dependency of:
-    // androidx.test.espresso:espresso-core:3.6.1
-    // androidx.test.espresso:espresso-intents:3.7.0
-    androidTestImplementation("org.hamcrest:hamcrest:2.2")
 
     debugImplementation("androidx.fragment:fragment-testing:1.8.8")
 }
