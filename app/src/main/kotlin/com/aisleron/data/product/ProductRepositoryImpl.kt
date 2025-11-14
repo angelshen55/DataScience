@@ -68,4 +68,12 @@ class ProductRepositoryImpl(
     override suspend fun getAllIncludingDeleted(): List<Product> {
         return productMapper.toModelList(productDao.getAllProductsIncludingDeleted())
     }
+
+    override suspend fun getDeletedByName(name: String): Product? {
+        return productDao.getDeletedProductByName(name.trim())?.let { productMapper.toModel(it) }
+    }
+
+    override suspend fun restore(item: Product) {
+        productDao.restore(item.id)
+    }
 }
