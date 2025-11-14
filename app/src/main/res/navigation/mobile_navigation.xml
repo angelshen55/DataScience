@@ -87,7 +87,21 @@
         android:id="@+id/nav_photos"
         android:name="com.aisleron.ui.photos.PhotosFragment"
         android:label="@string/menu_photos"
-        />
+        >
+        <action
+            android:id="@+id/action_nav_photos_to_nav_receipt_preview"
+            app:destination="@id/nav_receipt_preview" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_receipt_preview"
+        android:name="com.aisleron.ui.receipt.ReceiptPreviewFragment"
+        android:label="Receipt Preview"
+        tools:layout="@layout/fragment_receipt_preview">
+        <argument
+            android:name="receiptPreview"
+            app:argType="com.aisleron.ui.bundles.ReceiptPreviewBundle" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_settings"

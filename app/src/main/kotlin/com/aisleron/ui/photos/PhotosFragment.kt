@@ -26,6 +26,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import androidx.core.os.bundleOf
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
@@ -38,6 +39,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -354,7 +356,8 @@ class PhotosFragment : Fragment() {
     private fun performOcrOnPhoto(bitmap: Bitmap, filePath: String) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val ocrResult = recognizeTextFromBitmap(bitmap, useChineseRecognizer = false)
+//                val ocrResult = recognizeTextFromBitmap(bitmap, useChineseRecognizer = true)
+                val ocrResult = recognizeBestTextFromBitmap(bitmap)
 
                 withContext(Dispatchers.Main) {
                     if (ocrResult.isNotBlank()) {
@@ -396,68 +399,32 @@ class PhotosFragment : Fragment() {
             recognizer.close()
         }
     }
+    private suspend fun recognizeBestTextFromBitmap(bitmap: Bitmap): String {
+        // Run both recognizers sequentially and choose the richer result
+        // This helps when images contain mixed Chinese and English text
+        val chinese = recognizeTextFromBitmap(bitmap, useChineseRecognizer = true)
+        val latin = recognizeTextFromBitmap(bitmap, useChineseRecognizer = false)
 
+        if (chinese.isBlank() && latin.isNotBlank()) return latin
+        if (latin.isBlank() && chinese.isNotBlank()) return chinese
+
+        // If both have content, prefer the longer one (rough heuristic)
+        return if (chinese.length >= latin.length) chinese else latin
+    }
 
     private fun showOcrResult(recognizedText: String, filePath: String) {
-        // 创建自定义对话框
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_ocr_result, null)
-        val etOcrText = dialogView.findViewById<EditText>(R.id.et_ocr_text)
-        val tvSelectionInfo = dialogView.findViewById<TextView>(R.id.tv_selection_info)
-        val btnCopyAll = dialogView.findViewById<MaterialButton>(R.id.btn_copy_all)
-        val btnCopySelected = dialogView.findViewById<MaterialButton>(R.id.btn_copy_selected)
-        val btnClose = dialogView.findViewById<MaterialButton>(R.id.btn_close)
-
-        // 设置OCR文本
-        etOcrText.setText(recognizedText)
-
-        // 默认情况下禁用复制选中按钮
-        btnCopySelected.isEnabled = false
-
-        // 监听文本选择变化
-        etOcrText.setOnClickListener {
-            updateSelectionInfo(etOcrText, tvSelectionInfo, btnCopySelected)
-        }
-
-        etOcrText.setOnLongClickListener {
-            updateSelectionInfo(etOcrText, tvSelectionInfo, btnCopySelected)
-            false
-        }
-
-        // 创建对话框
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .setCancelable(true)
-            .create()
-
-        // 设置窗口背景
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        // 按钮点击事件
-        btnCopyAll.setOnClickListener {
-            copyTextToClipboard(recognizedText)
-            Toast.makeText(requireContext(), "All text copied to clipboard", Toast.LENGTH_SHORT).show()
-        }
-
-        btnCopySelected.setOnClickListener {
-            val selectedText = getSelectedText(etOcrText)
-            if (selectedText.isNotEmpty()) {
-                copyTextToClipboard(selectedText)
-                Toast.makeText(requireContext(), "Selected text copied to clipboard", Toast.LENGTH_SHORT).show()
+        try {
+            val result = com.aisleron.domain.receipt.ReceiptParser.parse(recognizedText, java.util.Locale.getDefault())
+            val receiptPreviewBundle = com.aisleron.ui.bundles.ReceiptPreviewBundle.fromReceiptItems(result.items)
+            // Navigation Component 需要将 argument 名称作为 key
+            val bundle = Bundle().apply {
+                putParcelable("receiptPreview", receiptPreviewBundle)
             }
+            findNavController().navigate(R.id.nav_receipt_preview, bundle)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Navigation failed: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
         }
-
-        btnClose.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        // 显示对话框
-        dialog.show()
-
-        // 设置对话框大小
-        val displayMetrics = resources.displayMetrics
-        val width = (displayMetrics.widthPixels * 0.9).toInt()
-        val height = (displayMetrics.heightPixels * 0.8).toInt()
-        dialog.window?.setLayout(width, height)
     }
 
     private fun updateSelectionInfo(
