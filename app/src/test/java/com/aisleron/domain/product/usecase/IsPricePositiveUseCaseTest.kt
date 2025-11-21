@@ -37,58 +37,34 @@ class IsPricePositiveUseCaseTest {
     }
 
     @Test
-    fun isPricePositive_ZeroPrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 0.0))
-        }
-
-        assertTrue(result)
+    fun isPricePositive_ZeroPrice_ReturnsTrue() = runTest {
+        assertTrue(isPricePositiveUseCase(createProduct(price = 0.0)))
     }
 
     @Test
-    fun isPricePositive_PositivePrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 10.50))
-        }
-
-        assertTrue(result)
+    fun isPricePositive_PositivePrice_ReturnsTrue() = runTest {
+        assertTrue(isPricePositiveUseCase(createProduct(price = 10.50)))
     }
 
     @Test
-    fun isPricePositive_LargePositivePrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 999_999.99))
-        }
-
-        assertTrue(result)
+    fun isPricePositive_LargePositivePrice_ReturnsTrue() = runTest {
+        assertTrue(isPricePositiveUseCase(createProduct(price = 999_999.99)))
     }
 
     @Test
-    fun isPricePositive_SmallPositivePrice_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 0.01))
-        }
-
-        assertTrue(result)
+    fun isPricePositive_SmallPositivePrice_ReturnsTrue() = runTest {
+        assertTrue(isPricePositiveUseCase(createProduct(price = 0.01)))
     }
 
 
     @Test
-    fun isPricePositive_NegativePrice_ReturnsFalse() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = -5.0))
-        }
-
-        assertFalse(result)
+    fun isPricePositive_NegativePrice_ReturnsFalse() = runTest {
+        assertFalse(isPricePositiveUseCase(createProduct(price = -5.0)))
     }
 
     @Test
-    fun isPricePositive_LargeNegativePrice_ReturnsFalse() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = -100.50))
-        }
-
-        assertFalse(result)
+    fun isPricePositive_LargeNegativePrice_ReturnsFalse() = runTest {
+        assertFalse(isPricePositiveUseCase(createProduct(price = -100.50)))
     }
 
     @ParameterizedTest(name = "Test price value: {0}, expected: {1}")
@@ -104,21 +80,13 @@ class IsPricePositiveUseCaseTest {
         "-10.5, false",
         "-99.99, false"
     )
-    fun isPricePositive_VariousPrices_ReturnsExpected(price: Double, expected: Boolean) {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = price))
-        }
-
-        assertEquals(expected, result)
+    fun isPricePositive_VariousPrices_ReturnsExpected(price: Double, expected: Boolean) = runTest {
+        assertEquals(expected, isPricePositiveUseCase(createProduct(price = price)))
     }
 
     @Test
-    fun isPricePositive_PriceWithManyDecimals_ReturnsTrue() {
-        val result = runTest {
-            isPricePositiveUseCase(createProduct(price = 12.3456789))
-        }
-
-        assertTrue(result)
+    fun isPricePositive_PriceWithManyDecimals_ReturnsTrue() = runTest {
+        assertTrue(isPricePositiveUseCase(createProduct(price = 12.3456789)))
     }
 
     private fun createProduct(price: Double) = Product(

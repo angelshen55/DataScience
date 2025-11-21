@@ -12,6 +12,7 @@ import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
 import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
 import com.aisleron.domain.aisleproduct.usecase.UpdateAisleProductsUseCase
 import com.aisleron.domain.location.LocationRepository
+import com.aisleron.domain.location.usecase.GetHomeLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.product.usecase.AddProductUseCaseImpl
@@ -80,14 +81,27 @@ class SortLocationByNameUseCaseImplTest {
     fun sortLocationByName_WithProducts_ProductsSorted() = runTest {
         val locationRepository = testData.getRepository<LocationRepository>()
         val locationId = locationRepository.getShops().first().first().id
+        val productRepository = testData.getRepository<ProductRepository>()
+        val aisleRepository = testData.getRepository<AisleRepository>()
+        val aisleProductRepository = testData.getRepository<AisleProductRepository>()
+        val getLocationUseCase = GetLocationUseCase(locationRepository)
+        val addAisleUseCase = AddAisleUseCaseImpl(
+            aisleRepository,
+            getLocationUseCase,
+            IsAisleNameUniqueUseCase(aisleRepository)
+        )
         val addProductUseCase = AddProductUseCaseImpl(
-            testData.getRepository<ProductRepository>(),
+            productRepository,
             testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
-            GetDefaultAislesUseCase(testData.getRepository<AisleRepository>()),
-            AddAisleProductsUseCase(testData.getRepository<AisleProductRepository>()),
-            IsProductNameUniqueUseCase(testData.getRepository<ProductRepository>()),
+            GetDefaultAislesUseCase(aisleRepository),
+            AddAisleProductsUseCase(aisleProductRepository),
+            IsProductNameUniqueUseCase(productRepository),
             com.aisleron.domain.product.usecase.IsPricePositiveUseCase(),
-            GetAisleMaxRankUseCase(testData.getRepository<AisleProductRepository>())
+            GetAisleMaxRankUseCase(aisleProductRepository),
+            getLocationUseCase,
+            GetHomeLocationUseCase(locationRepository),
+            addAisleUseCase,
+            aisleRepository
         )
 
         val product = Product(

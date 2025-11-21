@@ -82,6 +82,7 @@ val viewModelTestModule = module {
             updateProductUseCase = get(),
             getProductUseCase = get(),
             getAisleUseCase = get(),
+            getDefaultAisleForLocationUseCase = get(),
             coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }

@@ -72,8 +72,10 @@ class ProductDaoTestImpl : ProductDao {
         val product = getProduct(productId)
         product?.let {
             val updatedProduct = it.copy(isDeleted = true)
-            productList.removeAt(productList.indexOf(it))
-            productList.add(updatedProduct)
+            val index = productList.indexOf(it)
+            if (index >= 0) {
+                productList[index] = updatedProduct
+            }
         }
     }
 
@@ -85,6 +87,19 @@ class ProductDaoTestImpl : ProductDao {
 
     override suspend fun getProductByName(name: String): ProductEntity? {
         return productList.find { it.name.uppercase() == name.uppercase() }
+    }
+
+    override suspend fun getDeletedProductByName(name: String): ProductEntity? {
+        return productList.find { it.name.equals(name, ignoreCase = true) && it.isDeleted }
+    }
+
+    override suspend fun restore(productId: Int) {
+        val product = getProduct(productId) ?: return
+        val updatedProduct = product.copy(isDeleted = false)
+        val index = productList.indexOf(product)
+        if (index >= 0) {
+            productList[index] = updatedProduct
+        }
     }
 
     override suspend fun getProducts(): List<ProductEntity> {
