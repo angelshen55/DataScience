@@ -19,6 +19,7 @@ package com.aisleron.data.record
 
 import com.aisleron.domain.record.Record
 import com.aisleron.domain.record.RecordRepository
+import java.util.Date
 
 class RecordRepositoryImpl(
     private val recordDao: RecordDao,
@@ -52,5 +53,20 @@ class RecordRepositoryImpl(
 
     override suspend fun getRecordsByDateRange(startDate: Long, endDate: Long): List<Record> {
         return recordMapper.toModelList(recordDao.getRecordsByDateRange(startDate, endDate))
+    }
+    
+    // New methods for recommendation feature
+    override suspend fun getProductPurchaseCounts(): List<com.aisleron.domain.record.ProductPurchaseCount> {
+        return recordDao.getProductPurchaseCounts().map { 
+            com.aisleron.domain.record.ProductPurchaseCount(
+                productId = it.productId,
+                productName = it.productName,
+                purchaseCount = it.purchaseCount
+            )
+        }
+    }
+    
+    override suspend fun getPurchaseDatesForProduct(productId: Int): List<Date> {
+        return recordDao.getPurchaseDatesForProduct(productId)
     }
 }

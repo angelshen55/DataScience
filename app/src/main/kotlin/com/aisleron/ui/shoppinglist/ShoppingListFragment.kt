@@ -27,6 +27,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.View.OnAttachStateChangeListener
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
@@ -46,6 +47,7 @@ import com.aisleron.domain.FilterType
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.location.LocationType
 import com.aisleron.domain.loyaltycard.LoyaltyCard
+import com.aisleron.domain.product.ProductRecommendation
 import com.aisleron.ui.AisleronExceptionMap
 import com.aisleron.ui.AisleronFragment
 import com.aisleron.ui.ApplicationTitleUpdateListener
@@ -57,6 +59,7 @@ import com.aisleron.ui.copyentity.CopyEntityDialogFragment
 import com.aisleron.ui.copyentity.CopyEntityType
 import com.aisleron.ui.loyaltycard.LoyaltyCardProvider
 import com.aisleron.ui.settings.ShoppingListPreferences
+import com.aisleron.ui.shoppinglist.ProductShoppingListItemViewModel
 import com.aisleron.ui.widgets.ErrorSnackBar
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -84,15 +87,19 @@ class ShoppingListFragment(
         get() = shoppingListPreferences.showEmptyAisles(requireContext())
 
     private val shoppingListViewModel: ShoppingListViewModel by viewModel()
-
-    override fun onResume() {
-        super.onResume()
-        shoppingListViewModel.setShowEmptyAisles(showEmptyAisles)
-    }
+    
+    // Recommendation UI components
+    private var recommendationsSection: LinearLayout? = null
+    private var recommendationsRecyclerView: RecyclerView? = null
+    private var recommendationsAdapter: RecommendationRecyclerViewAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val shoppingListBundle = Bundler().getShoppingListBundle(arguments)
+        
+        // Pass context to ViewModel for preference access
+        shoppingListViewModel.setContext(requireContext())
+        
         shoppingListViewModel.hydrate(
             shoppingListBundle.locationId,
             shoppingListBundle.filterType,
@@ -107,6 +114,11 @@ class ShoppingListFragment(
         initializeFab()
 
         val view = inflater.inflate(R.layout.fragment_shopping_list, container, false)
+
+        // Initialize recommendation UI components
+        recommendationsSection = view.findViewById(R.id.recommendations_section)
+        recommendationsRecyclerView = view.findViewById(R.id.recommendations_list)
+        recommendationsRecyclerView?.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 
         // Set the adapter
         if (view is RecyclerView) {
@@ -133,95 +145,32 @@ class ShoppingListFragment(
                                     it.shoppingList
                                 )
                             }
+                            
+                            // Handle the new state with recommendations
+                            is ShoppingListViewModel.ShoppingListUiState.UpdatedWithRecommendations -> {
+                                updateTitle()
+                                setMenuItemVisibility()
+                                
+                                // Handle recommendations display
+                                handleRecommendationsDisplay(it.recommendations, it.isFirstTimeToday)
+
+                                (view.adapter as ShoppingListItemRecyclerViewAdapter).submitList(
+                                    it.shoppingList
+                                )
+                            }
 
                             else -> Unit
                         }
                     }
                 }
             }
-
+            
             with(view) {
                 var touchHelper: ItemTouchHelper? = null
 
                 LinearLayoutManager(context)
                 adapter = ShoppingListItemRecyclerViewAdapter(
-                    object :
-                        ShoppingListItemRecyclerViewAdapter.ShoppingListItemListener {
-                        override fun onClick(item: ShoppingListItem) {
-                            actionMode?.finish()
-                        }
-
-                        override fun onProductStatusChange(
-                            item: ProductShoppingListItem,
-                            inStock: Boolean
-                        ) {
-                            actionMode?.finish()
-                            shoppingListViewModel.updateProductStatus(item, inStock)
-                            displayStatusChangeSnackBar(item, inStock)
-                        }
-
-                        override fun onProductQuantityChange(
-                            item: ProductShoppingListItem, quantity: Int
-                        ) {
-                            shoppingListViewModel.updateProductNeededQuantity(item, quantity)
-                        }
-
-                        override fun onProductPriceChange(
-                            item: ProductShoppingListItem,
-                            price: Double
-                        ) {
-                            shoppingListViewModel.updateProductPrice(item, price)
-                        }
-
-                        override fun onListPositionChanged(
-                            item: ShoppingListItem, precedingItem: ShoppingListItem?
-                        ) {
-                            actionMode?.finish()
-                            shoppingListViewModel.updateItemRank(item, precedingItem)
-                        }
-
-                        override fun onLongClick(item: ShoppingListItem, view: View): Boolean {
-                            // Finish the previous action mode and start a new one
-                            actionMode?.finish()
-                            if (item.itemType == ShoppingListItem.ItemType.EMPTY_LIST) {
-                                return false
-                            }
-
-                            actionModeItem = item
-                            actionModeItemView = view
-                            actionModeItemView?.isSelected = true
-                            return when (actionMode) {
-                                null -> {
-                                    // Start the CAB using the ActionMode.Callback defined earlier.
-                                    actionMode =
-                                        (requireActivity() as AppCompatActivity).startSupportActionMode(
-                                            this@ShoppingListFragment
-                                        )
-                                    true
-                                }
-
-                                else -> false
-                            }
-                        }
-
-                        override fun onMoved(item: ShoppingListItem) {
-                            shoppingListViewModel.movedItem(item)
-                        }
-
-                        override fun onAisleExpandToggle(
-                            item: AisleShoppingListItem, expanded: Boolean
-                        ) {
-                            actionMode?.finish()
-                            shoppingListViewModel.updateAisleExpanded(item, expanded)
-                        }
-
-                        override fun onDragStart(viewHolder: RecyclerView.ViewHolder) {
-                            touchHelper?.startDrag(viewHolder)
-                        }
-
-                        override fun onMove(item: ShoppingListItem) {}
-                    },
-
+                    createShoppingListItemListener(),
                     shoppingListPreferences.trackingMode(requireContext()),
                     shoppingListViewModel.defaultFilter
                 )
@@ -232,10 +181,292 @@ class ShoppingListFragment(
                 touchHelper = ItemTouchHelper(callback)
                 touchHelper.attachToRecyclerView(view)
             }
+        } else {
+            // Handle the new layout with recommendations section
+            val shoppingListRecyclerView = view.findViewById<RecyclerView>(R.id.frg_shopping_list)
+            if (shoppingListRecyclerView != null) {
+                setWindowInsetListeners(this, shoppingListRecyclerView, true, null)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        shoppingListViewModel.shoppingListUiState.collect {
+                            when (it) {
+                                is ShoppingListViewModel.ShoppingListUiState.Error -> {
+                                    displayErrorSnackBar(
+                                        it.errorCode,
+                                        it.errorMessage,
+                                        fabHandler.getFabView(requireActivity())
+                                    )
+
+                                    shoppingListViewModel.clearState()
+                                }
+
+                                is ShoppingListViewModel.ShoppingListUiState.Updated -> {
+                                    updateTitle()
+                                    setMenuItemVisibility()
+                                    
+                                    // Hide recommendations section
+                                    recommendationsSection?.visibility = View.GONE
+
+                                    (shoppingListRecyclerView.adapter as? ShoppingListItemRecyclerViewAdapter)?.submitList(
+                                        it.shoppingList
+                                    ) ?: run {
+                                        shoppingListRecyclerView.adapter = ShoppingListItemRecyclerViewAdapter(
+                                            createShoppingListItemListener(),
+                                            shoppingListPreferences.trackingMode(requireContext()),
+                                            shoppingListViewModel.defaultFilter
+                                        )
+                                        (shoppingListRecyclerView.adapter as ShoppingListItemRecyclerViewAdapter).submitList(
+                                            it.shoppingList
+                                        )
+                                    }
+                                }
+                                
+                                // Handle the new state with recommendations
+                                is ShoppingListViewModel.ShoppingListUiState.UpdatedWithRecommendations -> {
+                                    updateTitle()
+                                    setMenuItemVisibility()
+                                    
+                                    // Handle recommendations display
+                                    handleRecommendationsDisplay(it.recommendations, it.isFirstTimeToday)
+
+                                    (shoppingListRecyclerView.adapter as? ShoppingListItemRecyclerViewAdapter)?.submitList(
+                                        it.shoppingList
+                                    ) ?: run {
+                                        shoppingListRecyclerView.adapter = ShoppingListItemRecyclerViewAdapter(
+                                            createShoppingListItemListener(),
+                                            shoppingListPreferences.trackingMode(requireContext()),
+                                            shoppingListViewModel.defaultFilter
+                                        )
+                                        (shoppingListRecyclerView.adapter as ShoppingListItemRecyclerViewAdapter).submitList(
+                                            it.shoppingList
+                                        )
+                                    }
+                                }
+
+                                else -> Unit
+                            }
+                        }
+                    }
+                }
+                
+                with(shoppingListRecyclerView) {
+                    var touchHelper: ItemTouchHelper? = null
+
+                    LinearLayoutManager(context)
+                    if (adapter == null) {
+                        adapter = ShoppingListItemRecyclerViewAdapter(
+                            createShoppingListItemListener(),
+                            shoppingListPreferences.trackingMode(requireContext()),
+                            shoppingListViewModel.defaultFilter
+                        )
+                    }
+
+                    val callback: ItemTouchHelper.Callback = ShoppingListItemMoveCallbackListener(
+                        adapter as ShoppingListItemRecyclerViewAdapter
+                    )
+                    touchHelper = ItemTouchHelper(callback)
+                    touchHelper.attachToRecyclerView(shoppingListRecyclerView)
+                }
+            }
         }
         return view
     }
+    
+    private fun handleRecommendationsDisplay(recommendations: List<ProductRecommendation>, isFirstTimeToday: Boolean = true) {
+        // Always show recommendations section when manually triggered
+        recommendationsSection?.visibility = View.VISIBLE
+        
+        // Show hint message if not first time today
+        val hintTextView = view?.findViewById<android.widget.TextView>(R.id.recommendations_hint)
+        if (!isFirstTimeToday) {
+            hintTextView?.visibility = View.VISIBLE
+            hintTextView?.text = "You already checked"
+        } else {
+            hintTextView?.visibility = View.GONE
+        }
+        
+        // Show message if no recommendations, otherwise show recommendations
+        if (recommendations.isEmpty()) {
+            // Show a message indicating no recommendations
+            recommendationsAdapter = RecommendationRecyclerViewAdapter(
+                listOf(createNoRecommendationsItem()),
+                object : RecommendationRecyclerViewAdapter.RecommendationListener {
+                    override fun onAddToListClicked(recommendation: ProductRecommendation) {
+                        // Do nothing for the "no recommendations" item
+                    }
+                }
+            )
+        } else {
+            recommendationsAdapter = RecommendationRecyclerViewAdapter(
+                recommendations,
+                object : RecommendationRecyclerViewAdapter.RecommendationListener {
+                    override fun onAddToListClicked(recommendation: ProductRecommendation) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            // Ensure product is added to current location's default aisle if not already present
+                            shoppingListViewModel.addProductToCurrentLocationIfNeeded(
+                                recommendation.product.id,
+                                shoppingListViewModel.locationId
+                            )
+                            
+                            // Move the product to needed status
+                            // Create a simple data class implementing ProductShoppingListItem with only the required fields
+                            data class SimpleProductShoppingListItem(
+                                override val id: Int,
+                                override val name: String,
+                                override val inStock: Boolean,
+                                override val qtyNeeded: Int,
+                                override val price: Double
+                            ) : ProductShoppingListItem {
+                                override val aisleId: Int = 0
+                                override val aisleRank: Int = 0
+                                override val rank: Int = 0
+                                override val itemType: ShoppingListItem.ItemType = ShoppingListItem.ItemType.PRODUCT
+                            }
+                            
+                            val item = SimpleProductShoppingListItem(
+                                id = recommendation.product.id,
+                                name = recommendation.product.name,
+                                inStock = recommendation.product.inStock,
+                                qtyNeeded = recommendation.product.qtyNeeded,
+                                price = recommendation.product.price
+                            )
+                            shoppingListViewModel.updateProductStatus(item, false)
+                            
+                            // Update last display date to prevent automatic recommendations today
+                            // But still allow manual recommendations via the button
+                            if (shoppingListViewModel.context != null) {
+                                val preferences = com.aisleron.ui.settings.ShoppingListPreferencesImpl()
+                                preferences.setLastRecommendationDisplayDate(
+                                    shoppingListViewModel.context!!, 
+                                    System.currentTimeMillis()
+                                )
+                            }
+                            
+                            // Request a refresh of the shopping list to show the added product
+                            shoppingListViewModel.requestDefaultList()
+                        }
+                    }
+                }
+            )
+        }
+        recommendationsRecyclerView?.adapter = recommendationsAdapter
+    }
+    
+    // Helper method to create a "no recommendations" item
+    private fun createNoRecommendationsItem(): ProductRecommendation {
+        // Create a dummy product for the "no recommendations" message
+        val dummyProduct = com.aisleron.domain.product.Product(
+            id = -1,
+            name = "No recommendations available",
+            inStock = false,
+            qtyNeeded = 0,
+            price = 0.0
+        )
+        
+        return ProductRecommendation(
+            product = dummyProduct,
+            score = 0.0,
+            purchaseCount = 0,
+            frequencyScore = 0.0,
+            timeDecayScore = 0.0,
+            periodicityScore = 0.0,
+            daysSinceLastPurchase = 0,
+            averagePurchaseInterval = 0.0
+        )
+    }
 
+    private fun createShoppingListItemListener(): ShoppingListItemRecyclerViewAdapter.ShoppingListItemListener {
+        return object : ShoppingListItemRecyclerViewAdapter.ShoppingListItemListener {
+            override fun onClick(item: ShoppingListItem) {
+                actionMode?.finish()
+            }
+
+            override fun onProductStatusChange(
+                item: ProductShoppingListItem,
+                inStock: Boolean
+            ) {
+                actionMode?.finish()
+                shoppingListViewModel.updateProductStatus(item, inStock)
+                displayStatusChangeSnackBar(item, inStock)
+            }
+
+            override fun onProductQuantityChange(
+                item: ProductShoppingListItem, quantity: Int
+            ) {
+                shoppingListViewModel.updateProductNeededQuantity(item, quantity)
+            }
+
+            override fun onProductPriceChange(
+                item: ProductShoppingListItem,
+                price: Double
+            ) {
+                shoppingListViewModel.updateProductPrice(item, price)
+            }
+
+            override fun onListPositionChanged(
+                item: ShoppingListItem, precedingItem: ShoppingListItem?
+            ) {
+                actionMode?.finish()
+                shoppingListViewModel.updateItemRank(item, precedingItem)
+            }
+
+            override fun onLongClick(item: ShoppingListItem, view: View): Boolean {
+                // Finish the previous action mode and start a new one
+                actionMode?.finish()
+                if (item.itemType == ShoppingListItem.ItemType.EMPTY_LIST) {
+                    return false
+                }
+
+                actionModeItem = item
+                actionModeItemView = view
+                actionModeItemView?.isSelected = true
+                return when (actionMode) {
+                    null -> {
+                        // Start the CAB using the ActionMode.Callback defined earlier.
+                        actionMode =
+                            (requireActivity() as AppCompatActivity).startSupportActionMode(
+                                this@ShoppingListFragment
+                            )
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+
+            override fun onMoved(item: ShoppingListItem) {
+                shoppingListViewModel.movedItem(item)
+            }
+
+            override fun onAisleExpandToggle(
+                item: AisleShoppingListItem, expanded: Boolean
+            ) {
+                actionMode?.finish()
+                shoppingListViewModel.updateAisleExpanded(item, expanded)
+            }
+
+            override fun onDragStart(viewHolder: RecyclerView.ViewHolder) {
+                // This will be handled by the touchHelper in the with block
+            }
+
+            override fun onMove(item: ShoppingListItem) {}
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        shoppingListViewModel.setShowEmptyAisles(showEmptyAisles)
+    }
+    
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        aisleDialog.observeLifecycle(viewLifecycleOwner)
+        val menuHost = requireActivity()
+        menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        view.keepScreenOn = shoppingListPreferences.keepScreenOn(requireContext())
+    }
+    
     private fun setMenuItemVisibility() {
         editShopMenuItem?.isVisible = shoppingListViewModel.locationType == LocationType.SHOP
         loyaltyCardMenuItem?.isVisible = shoppingListViewModel.loyaltyCard != null
@@ -323,15 +554,6 @@ class ShoppingListFragment(
         )
 
         this.findNavController().navigate(R.id.nav_add_product, bundle)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        aisleDialog.observeLifecycle(viewLifecycleOwner)
-        val menuHost = requireActivity()
-        menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-        view.keepScreenOn = shoppingListPreferences.keepScreenOn(requireContext())
     }
 
     private fun navigateToEditShop(locationId: Int) {
@@ -487,6 +709,12 @@ class ShoppingListFragment(
                 navigateToEditShop(locationId = shoppingListViewModel.locationId)
                 true
             }
+            
+            R.id.mnu_show_recommendations -> {
+                // Show recommendations manually
+                showRecommendations()
+                true
+            }
 
             R.id.mnu_sort_list_by_name -> {
                 confirmSort(requireContext())
@@ -508,6 +736,26 @@ class ShoppingListFragment(
 
             else -> false
         }
+    }
+    
+    private fun showRecommendations() {
+        // Check if recommendations are currently visible
+        if (recommendationsSection?.visibility == View.VISIBLE && recommendationsAdapter != null) {
+            // Hide recommendations if they're already visible
+            shoppingListViewModel.hideRecommendations()
+        } else {
+            // Request recommendations from the ViewModel
+            shoppingListViewModel.loadRecommendations()
+        }
+    }
+    
+    // Modify this method to show a message when there are no recommendations
+    private fun showNoRecommendationsMessage() {
+        Snackbar.make(
+            requireView(),
+            "Today's recommendations have already been shown",
+            Snackbar.LENGTH_SHORT
+        ).setAnchorView(fabHandler.getFabView(this.requireActivity())).show()
     }
 
     private fun showLoyaltyCard(loyaltyCard: LoyaltyCard) {
