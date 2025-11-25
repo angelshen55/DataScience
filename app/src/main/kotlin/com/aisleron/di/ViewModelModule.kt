@@ -64,7 +64,8 @@ val viewModelModule = module {
             getShopsUseCase = get(),
             getPinnedShopsUseCase = get(),
             removeLocationUseCase = get(),
-            getLocationUseCase = get()
+            getLocationUseCase = get(),
+            getShoppingListUseCase = get()
         )
     }
 

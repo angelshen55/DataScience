@@ -72,6 +72,7 @@ val viewModelTestModule = module {
             getPinnedShopsUseCase = get(),
             removeLocationUseCase = get(),
             getLocationUseCase = get(),
+            getShoppingListUseCase = get(),
             TestScope(UnconfinedTestDispatcher())
         )
     }

@@ -58,6 +58,7 @@ class ShopListItemRecyclerViewAdapter(
     inner class ViewHolder(binding: FragmentShopListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
         val contentView: TextView = binding.txtShopName
+        
     }
 
     interface ShopListItemListener {

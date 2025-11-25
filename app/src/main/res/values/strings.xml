@@ -175,6 +175,8 @@
     <string name="aisleron_logo">Aisleron logo</string>
     <string name="in_stock_at_home">In stock at home?</string>
     <string name="shop_logo">Shop Logo</string>
+    <string name="recommendation_message_template">Recommended: Go to %1$s — %2$d needed items</string>
+    <string name="hello_world_message">hello world!</string>
     <string name="aisle_expand">Aisle expand</string>
     <string name="show_empty_aisles">Show empty aisles</string>
     <string name="mnu_edit_location">Edit shop</string>
