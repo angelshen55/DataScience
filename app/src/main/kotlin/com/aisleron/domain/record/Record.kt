@@ -25,6 +25,6 @@ data class Record(
     val date: Date,
     val stock: Boolean,
     val price: Double = 0.0,
-    val quantity: Int = 1,
+    val quantity: Double = 0.0,
     val shop: String = "shop1"
 )

@@ -73,7 +73,6 @@ import android.widget.EditText
 import android.widget.TextView
 import android.util.Base64
 import com.aisleron.data.receipt.ReceiptRemoteParser
-import com.aisleron.ui.receipt.ReceiptPreviewDialog
 
 
 // Photo upload and recognize text from image
@@ -431,29 +430,13 @@ class PhotosFragment : Fragment() {
     }
 
     private fun sendBitmapToRemoteParserAndShowPreview(bitmap: Bitmap, filePath: String) {
-        // lifecycleScope 在文件顶部应该已导入
         lifecycleScope.launch {
             try {
-                // bitmap -> base64 (JPEG, quality 可调整)
                 val baos = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
                 val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-
-                // 调用远端解析 API（替换为真实 URL）
-                // 使用 ReceiptRemoteParser 的单参数签名（内部会获取 token 并调用百度 API）
                 val items = ReceiptRemoteParser.parseImageBase64(base64)
-
-                // 展示到现有的预览对话框（保持现有导入流程）
-                val dialog = ReceiptPreviewDialog(
-                    initialItems = items,
-                    onCancelImport = { /* 可保持原有行为 */ },
-                    onConfirmImport = { confirmedItems ->
-                        // 将用户确认的 items 传回主流程：这里调用现有的导入逻辑
-                        // 假设原来有个函数 handleConfirmedReceiptItems(...)
-                        handleConfirmedReceiptItems(confirmedItems)
-                    }
-                )
-                dialog.show(parentFragmentManager, "receipt_preview")
+                navigateToReceiptPreview(items)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "远程解析失败: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -463,30 +446,15 @@ class PhotosFragment : Fragment() {
     private fun sendBitmapToBaiduAndShowPreview(bitmap: Bitmap, filePath: String) {
         lifecycleScope.launch {
             try {
-                // bitmap -> base64
                 val baos = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
                 val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-
-                // 调用百度 API（自动获取 token）
                 val items = ReceiptRemoteParser.parseImageBase64(base64)
-
                 if (items.isEmpty()) {
                     Toast.makeText(requireContext(), "未识别到商品信息", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
-
-                // 展示预览对话框
-                val dialog = ReceiptPreviewDialog(
-                    initialItems = items,
-                    onCancelImport = {
-                        Toast.makeText(requireContext(), "已取消导入", Toast.LENGTH_SHORT).show()
-                    },
-                    onConfirmImport = { confirmedItems ->
-                        navigateToReceiptPreview(confirmedItems)
-                    }
-                )
-                dialog.show(parentFragmentManager, "receipt_preview")
+                navigateToReceiptPreview(items)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "识别失败: ${e.message}", Toast.LENGTH_LONG).show()
             }

@@ -62,6 +62,98 @@ object ReceiptRemoteParser {
         val error_msg: String?
     )
 
+    private fun isBarcode(name: String?): Boolean {
+        if (name == null) return false
+        val n = name.trim()
+        return n.matches(Regex("^\\d{8,}$"))
+    }
+
+    private data class ParsedRow(
+        val name: String?,
+        val quantityText: String?,
+        val unitPriceText: String?,
+        val subtotalText: String?
+    )
+
+    private fun toReceiptItems(response: BaiduApiResponse): List<ReceiptItem> {
+        val rawRows = response.wordsResult?.firstOrNull()?.table.orEmpty().map { r ->
+            ParsedRow(
+                name = r.product?.word?.trim(),
+                quantityText = r.quantity?.word?.trim(),
+                unitPriceText = r.unitPrice?.word?.trim(),
+                subtotalText = r.subtotalAmount?.word?.trim()
+            )
+        }
+
+        val merged = mutableListOf<ParsedRow>()
+        var i = 0
+        while (i < rawRows.size) {
+            val cur = rawRows[i]
+            if (i + 1 < rawRows.size) {
+                val next = rawRows[i + 1]
+                val curBarcode = isBarcode(cur.name)
+                val nextBarcode = isBarcode(next.name)
+                if ((curBarcode && !nextBarcode) || (!curBarcode && nextBarcode)) {
+                    val textRow = if (!curBarcode) cur else next
+                    val codeRow = if (curBarcode) cur else next
+                    merged.add(
+                        ParsedRow(
+                            name = textRow.name,
+                            quantityText = textRow.quantityText ?: codeRow.quantityText,
+                            unitPriceText = textRow.unitPriceText ?: codeRow.unitPriceText,
+                            subtotalText = textRow.subtotalText ?: codeRow.subtotalText
+                        )
+                    )
+                    i += 2
+                    continue
+                }
+            }
+            merged.add(cur)
+            i += 1
+        }
+
+        val items = merged.mapNotNull { pr ->
+            val name = pr.name?.trim()
+            if (name.isNullOrEmpty()) return@mapNotNull null
+
+            var qty = pr.quantityText?.toDoubleOrNull()
+            var unitPrice = pr.unitPriceText?.let {
+                try { BigDecimal(it) } catch (_: Exception) { null }
+            }
+            var subtotal = pr.subtotalText?.let {
+                try { BigDecimal(it) } catch (_: Exception) { null }
+            }
+
+            if (unitPrice == null && subtotal != null && qty != null && qty > 0.0) {
+                try {
+                    unitPrice = subtotal.divide(java.math.BigDecimal.valueOf(qty), 2, java.math.RoundingMode.HALF_UP)
+                } catch (_: Exception) {}
+            }
+
+            if ((qty == null || qty <= 0.0) && subtotal != null && unitPrice != null && unitPrice > BigDecimal.ZERO) {
+                try {
+                    qty = subtotal.divide(unitPrice, 2, java.math.RoundingMode.HALF_UP).toDouble()
+                } catch (_: Exception) {}
+            }
+
+            if (subtotal == null && unitPrice != null && qty != null && qty > 0.0) {
+                subtotal = unitPrice.multiply(java.math.BigDecimal.valueOf(qty))
+            }
+
+            val finalQty = qty ?: 0.0
+            val finalUnitPrice = unitPrice ?: BigDecimal.ZERO
+
+            ReceiptItem(name = name, unitPrice = finalUnitPrice, quantity = finalQty)
+        }
+
+        val grouped = items.groupBy { Pair(it.name.trim().lowercase(), it.unitPrice) }
+        return grouped.map { (_, list) ->
+            val first = list.first()
+            val totalQty = list.sumOf { it.quantity }
+            ReceiptItem(name = first.name, unitPrice = first.unitPrice, quantity = totalQty)
+        }
+    }
+
     /**
      * 获取百度 access_token
      */
@@ -124,27 +216,7 @@ object ReceiptRemoteParser {
                 throw Exception("百度 API 返回错误: ${response.error_msg}")
             }
 
-            // 提取 table 中的商品
-            val items = response.wordsResult?.firstOrNull()?.table.orEmpty().mapNotNull { row ->
-                val productName = row.product?.word?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-                val unitPriceStr = row.unitPrice?.word?.trim() ?: return@mapNotNull null
-                
-                try {
-                    val unitPrice = BigDecimal(unitPriceStr)
-                    // 从 quantity 字段获取数量（通常是重量，默认为 1）
-                    val qty = try {
-                        val qtyStr = row.quantity?.word?.trim()
-                        if (qtyStr.isNullOrEmpty()) 1 else qtyStr.toInt()
-                    } catch (e: Exception) {
-                        1
-                    }
-                    
-                    ReceiptItem(name = productName, unitPrice = unitPrice, quantity = qty)
-                } catch (e: Exception) {
-                    null
-                }
-            }
-            items
+            toReceiptItems(response)
         }
     }
 
