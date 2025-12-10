@@ -53,6 +53,17 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
 
         holder.title.text = "Loading... • ${df.format(r.date)}"
         holder.sub.text = "Qty: ${String.format("%.2f", r.quantity)} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)} | Stock: ${r.stock}"
+        run {
+            val parts = mutableListOf(
+                "Qty: ${r.quantity}",
+                "Shop: ${r.shop}"
+            )
+            if (!r.shop.equals("Home", ignoreCase = true)) {
+                parts.add("Total: $${String.format("%.2f", r.price * r.quantity)}")
+            }
+            parts.add("Stock: ${r.stock}")
+            holder.sub.text = parts.joinToString(" | ")
+        }
         
         productRepository?.let { repo ->
             CoroutineScope(Dispatchers.IO).launch {
@@ -62,11 +73,28 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
                         val productName = product?.name ?: "Unknown Product"
                         holder.title.text = "$productName • ${df.format(r.date)}"
                         holder.sub.text = "Qty: ${String.format("%.2f", r.quantity)} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)} | Stock: ${r.stock}"
+                        val parts = mutableListOf(
+                            "Qty: ${r.quantity}",
+                            "Shop: ${r.shop}"
+                        )
+                        if (!r.shop.equals("Home", ignoreCase = true)) {
+                            parts.add("Total: $${String.format("%.2f", r.price * r.quantity)}")
+                        }
+                        parts.add("Stock: ${r.stock}")
+                        holder.sub.text = parts.joinToString(" | ")
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         holder.title.text = "Product #${r.productId} • ${df.format(r.date)}"
                         holder.sub.text = "Qty: ${String.format("%.2f", r.quantity)} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)}"
+                        val parts = mutableListOf(
+                            "Qty: ${r.quantity}",
+                            "Shop: ${r.shop}"
+                        )
+                        if (!r.shop.equals("Home", ignoreCase = true)) {
+                            parts.add("Total: $${String.format("%.2f", r.price * r.quantity)}")
+                        }
+                        holder.sub.text = parts.joinToString(" | ")
                     }  
                 }
             }

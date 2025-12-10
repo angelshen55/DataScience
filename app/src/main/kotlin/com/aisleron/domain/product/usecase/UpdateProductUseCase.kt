@@ -18,6 +18,8 @@
 package com.aisleron.domain.product.usecase
 
 import com.aisleron.domain.base.AisleronException
+import com.aisleron.domain.aisle.usecase.GetDefaultAislesUseCase
+import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.record.RecordRepository
@@ -27,7 +29,9 @@ import java.util.Date
 class UpdateProductUseCase(
     private val productRepository: ProductRepository,
     private val recordRepository: RecordRepository,
-    private val isProductNameUniqueUseCase: IsProductNameUniqueUseCase
+    private val isProductNameUniqueUseCase: IsProductNameUniqueUseCase,
+    private val getDefaultAislesUseCase: GetDefaultAislesUseCase,
+    private val getLocationUseCase: GetLocationUseCase
 ) {
     suspend operator fun invoke(product: Product) {
 
@@ -41,12 +45,22 @@ class UpdateProductUseCase(
 
         if (oldProduct != null && 
             (oldProduct.price != product.price || oldProduct.inStock != product.inStock)) {
-            recordRepository.add(Record(
-                productId = product.id,
-                date = Date(),
-                stock = product.inStock,
-                price = product.price
-            ))
+            val defaultAisles = getDefaultAislesUseCase()
+            val selectedAisle = defaultAisles.firstOrNull()
+            val shopName = selectedAisle?.let { aisle ->
+                runCatching { getLocationUseCase(aisle.locationId)?.name }.getOrNull()
+            }
+
+            recordRepository.add(
+                Record(
+                    productId = product.id,
+                    date = Date(),
+                    stock = product.inStock,
+                    price = product.price,
+                    quantity = product.qtyNeeded,
+                    shop = shopName ?: "None"
+                )
+            )
         }
     }
 }

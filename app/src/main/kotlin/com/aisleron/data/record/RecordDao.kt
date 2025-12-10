@@ -65,4 +65,31 @@ interface RecordDao : BaseDao<RecordEntity> {
     ORDER BY r.date DESC
     """)
     suspend fun getHistoryUi(): List<RecordWithProductUi>
+
+    @Query(
+        """
+        SELECT
+            r.id AS recordId,
+            r.product_id AS productId,
+            COALESCE(p.name, 'Unknown Product') AS productName,
+            r.price AS unitPrice,
+            r.quantity AS quantity,
+            r.shop AS shop,
+            (r.quantity * r.price) AS totalCost,
+            r.date AS date
+        FROM Record r
+        LEFT JOIN Product p ON p.id = r.product_id
+        WHERE (:name IS NULL OR p.name LIKE '%' || :name || '%')
+          AND (:shop IS NULL OR r.shop = :shop)
+          AND (:startMillis IS NULL OR r.date >= :startMillis)
+          AND (:endMillis IS NULL OR r.date <= :endMillis)
+        ORDER BY r.date DESC
+        """
+    )
+    suspend fun getHistoryUiFiltered(
+        name: String?,
+        shop: String?,
+        startMillis: Long?,
+        endMillis: Long?
+    ): List<RecordWithProductUi>
 }
