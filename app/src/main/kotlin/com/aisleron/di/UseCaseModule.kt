@@ -83,6 +83,11 @@ import com.aisleron.domain.product.usecase.UpdateProductPriceUseCaseImpl
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCaseImpl
 import com.aisleron.domain.product.usecase.UpdateProductUseCase
+import com.aisleron.domain.product.usecase.CollectPurchaseSetsUseCase
+import com.aisleron.domain.product.usecase.CollectPurchaseSetsUseCaseImpl
+import com.aisleron.domain.product.PurchaseSetRepository
+import com.aisleron.domain.product.ModelTrainingDataUploader
+import com.aisleron.domain.product.ModelTrainingDataUploaderImpl
 import com.aisleron.domain.record.RecordRepository
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCase
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCaseImpl
@@ -324,5 +329,22 @@ val useCaseModule = module {
 
     factory<GetLoyaltyCardForLocationUseCase> {
         GetLoyaltyCardForLocationUseCaseImpl(loyaltyCardRepository = get())
+    }
+
+    /**
+     * Purchase Set Collection Use Cases
+     */
+    factory<CollectPurchaseSetsUseCase> {
+        CollectPurchaseSetsUseCaseImpl(
+            recordRepository = get(),
+            purchaseSetRepository = get()
+        )
+    }
+
+    /**
+     * Model Training Data Uploader
+     */
+    factory<ModelTrainingDataUploader> {
+        ModelTrainingDataUploaderImpl(productRepository = get())
     }
 }

@@ -7,6 +7,7 @@ plugins {
     id("com.android.library") version "8.13.1" apply false
     id("com.autonomousapps.dependency-analysis") version "2.19.0"
     id("org.jetbrains.kotlin.jvm") version "2.2.0" apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false
     // To check dependencies, run: ./gradlew buildHealth
 }
 

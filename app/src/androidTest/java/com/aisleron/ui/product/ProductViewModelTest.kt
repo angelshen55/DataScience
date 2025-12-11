@@ -116,8 +116,8 @@ class ProductViewModelTest(private val inStock: Boolean) : KoinTest {
         productViewModel.updateInStock(inStock)
         productViewModel.saveProduct()
 
-        Assert.assertEquals(
-            ProductViewModel.ProductUiState.Success, productViewModel.productUiState.value
+        Assert.assertTrue(
+            productViewModel.productUiState.value is ProductViewModel.ProductUiState.Success
         )
     }
 

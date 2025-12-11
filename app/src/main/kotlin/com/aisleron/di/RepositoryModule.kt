@@ -32,9 +32,12 @@ import com.aisleron.domain.aisleproduct.AisleProductRepository
 import com.aisleron.domain.location.LocationRepository
 import com.aisleron.domain.loyaltycard.LoyaltyCardRepository
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.product.PurchaseSetRepository
+import com.aisleron.data.product.PurchaseSetRepositoryImpl
 import com.aisleron.domain.record.RecordRepository
 import com.aisleron.data.record.RecordMapper
 import com.aisleron.data.record.RecordRepositoryImpl
+import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
 val repositoryModule = module {
@@ -72,5 +75,9 @@ val repositoryModule = module {
             locationLoyaltyCardDao = get(),
             loyaltyCardMapper = LoyaltyCardMapper()
         )
+    }
+
+    factory<PurchaseSetRepository> {
+        PurchaseSetRepositoryImpl(context = androidApplication())
     }
 }
