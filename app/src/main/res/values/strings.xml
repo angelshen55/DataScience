@@ -192,6 +192,8 @@
     <string name="decrement">Decrement</string>
     <string name="increment">Increment</string>
     <string name="qty">Qty</string>
-    <string name='price'>Price</string>
-
+    <string name="price">Price</string>
+    <string name="today_recommendations">Today\'s Recommendations</string>
+    <string name="add_to_list">Add to List</string>
+    
 </resources>

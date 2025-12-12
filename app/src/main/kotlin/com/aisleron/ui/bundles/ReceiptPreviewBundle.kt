@@ -44,7 +44,7 @@ data class ReceiptPreviewBundle(
 data class ReceiptItemParcelable(
     val name: String,
     val unitPrice: String, // BigDecimal as String
-    val quantity: Int = 1
+    val quantity: Double = 0.0
 ) : Parcelable {
     fun toReceiptItem(): ReceiptItem {
         return ReceiptItem(

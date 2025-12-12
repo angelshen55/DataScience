@@ -25,6 +25,16 @@ interface ShoppingListPreferences {
     fun setShowEmptyAisles(context: Context, value: Boolean)
     fun trackingMode(context: Context): TrackingMode
     fun keepScreenOn(context: Context): Boolean
+    
+    // New methods for recommendation tracking
+    fun getLastRecommendationDisplayDate(context: Context): Long
+    fun setLastRecommendationDisplayDate(context: Context, timestamp: Long)
+    fun shouldShowRecommendationsToday(context: Context): Boolean
+    
+    // Methods for storing today's recommendations
+    fun getTodayRecommendationsDate(context: Context): Long
+    fun setTodayRecommendationsDate(context: Context, timestamp: Long)
+    fun isTodayRecommendationsDate(context: Context): Boolean
 
     enum class TrackingMode {
         CHECKBOX,

@@ -18,6 +18,10 @@
 package com.aisleron.domain.product.usecase
 
 import com.aisleron.data.TestDataManager
+import com.aisleron.domain.aisle.AisleRepository
+import com.aisleron.domain.aisle.usecase.GetDefaultAislesUseCase
+import com.aisleron.domain.location.LocationRepository
+import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.record.Record
@@ -44,6 +48,8 @@ class UpdateProductPriceUseCaseTest {
     fun setUp() {
         testData = TestDataManager()
         val productRepository = testData.getRepository<ProductRepository>()
+        val aisleRepository = testData.getRepository<AisleRepository>()
+        val locationRepository = testData.getRepository<LocationRepository>()
         existingProduct = runBlocking { productRepository.get(1)!! }
         
         // Create a stub RecordRepository for testing
@@ -63,7 +69,9 @@ class UpdateProductPriceUseCaseTest {
         val updateProductUseCase = UpdateProductUseCase(
             productRepository,
             recordRepository,
-            IsProductNameUniqueUseCase(productRepository)
+            IsProductNameUniqueUseCase(productRepository),
+            GetDefaultAislesUseCase(aisleRepository),
+            GetLocationUseCase(locationRepository)
         )
         
         updateProductPriceUseCase = UpdateProductPriceUseCaseImpl(

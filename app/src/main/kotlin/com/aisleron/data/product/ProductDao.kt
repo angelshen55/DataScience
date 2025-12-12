@@ -55,4 +55,8 @@ interface ProductDao : BaseDao<ProductEntity> {
 
     @Query("UPDATE Product SET isDeleted = 0 WHERE id = :productId")
     suspend fun restore(productId: Int)
+
+    @Query("SELECT * FROM Product")
+    suspend fun getProducts(): List<ProductEntity>
+
 }

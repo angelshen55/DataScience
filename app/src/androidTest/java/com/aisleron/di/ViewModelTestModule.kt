@@ -62,7 +62,7 @@ val viewModelTestModule = module {
             addLoyaltyCardToLocationUseCase = get(),
             removeLoyaltyCardFromLocationUseCase = get(),
             getLoyaltyCardForLocationUseCase = get(),
-            TestScope(UnconfinedTestDispatcher())
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 
@@ -83,7 +83,8 @@ val viewModelTestModule = module {
             updateProductUseCase = get(),
             getProductUseCase = get(),
             getAisleUseCase = get(),
-            TestScope(UnconfinedTestDispatcher())
+            getDefaultAisleForLocationUseCase = get(),
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 
@@ -91,7 +92,7 @@ val viewModelTestModule = module {
         SettingsViewModel(
             backupDatabaseUseCase = get(),
             restoreDatabaseUseCase = get(),
-            TestScope(UnconfinedTestDispatcher())
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 
@@ -103,7 +104,7 @@ val viewModelTestModule = module {
         AisleViewModel(
             addAisleUseCase = get(),
             updateAisleUseCase = get(),
-            TestScope(UnconfinedTestDispatcher())
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 
@@ -111,7 +112,7 @@ val viewModelTestModule = module {
         WelcomeViewModel(
             createSampleDataUseCase = get(),
             getAllProductsUseCase = get(),
-            TestScope(UnconfinedTestDispatcher())
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 
@@ -121,7 +122,7 @@ val viewModelTestModule = module {
             copyProductUseCase = get(),
             getProductUseCase = get(),
             getLocationUseCase = get(),
-            TestScope(UnconfinedTestDispatcher())
+            coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
     }
 }

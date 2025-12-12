@@ -18,6 +18,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.Properties
+import java.io.File
 
 plugins {
     id("com.android.application")
@@ -66,13 +67,24 @@ android {
 
     defaultConfig {
         applicationId = "com.aisleron"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 35
-        versionCode = 10
-        versionName = "2025.7.0"
-        base.archivesName = "$applicationId-$versionName"
+        versionCode = 1
+        versionName = "1.0"
 
-        testInstrumentationRunner = "com.aisleron.di.KoinInstrumentationTestRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // load local.properties (root) and inject BAIDU credentials into BuildConfig
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(FileInputStream(localPropsFile))
+        }
+        val baiduClientId = localProps.getProperty("baidu.client_id", "")
+        val baiduClientSecret = localProps.getProperty("baidu.client_secret", "")
+
+        buildConfigField("String", "BAIDU_CLIENT_ID", "\"$baiduClientId\"")
+        buildConfigField("String", "BAIDU_CLIENT_SECRET", "\"$baiduClientSecret\"")
     }
 
     ksp {
@@ -180,6 +192,10 @@ dependencies {
 
     //Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+
+    //HTTP Client & JSON
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     //diagrams
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")

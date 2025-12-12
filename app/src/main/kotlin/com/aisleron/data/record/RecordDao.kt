@@ -27,10 +27,17 @@ data class RecordWithProductUi(
     val productId: Int,
     val productName: String,
     val unitPrice: Double,
-    val quantity: Int,
+    val quantity: Double,
     val shop: String,
     val totalCost: Double,
     val date: Date
+)
+
+// New data class for purchase history analysis
+data class ProductPurchaseHistory(
+    val productId: Int,
+    val productName: String,
+    val purchaseDates: List<Date>
 )
 
 @Dao
@@ -92,4 +99,34 @@ interface RecordDao : BaseDao<RecordEntity> {
         startMillis: Long?,
         endMillis: Long?
     ): List<RecordWithProductUi>
+
+    // New method for getting purchase history for a specific product
+    @Query("""
+        SELECT r.date
+        FROM Record r
+        WHERE r.product_id = :productId
+        ORDER BY r.date ASC
+    """)
+    suspend fun getPurchaseDatesForProduct(productId: Int): List<Date>
+    
+    // New method for getting all products with their purchase counts
+    @Query("""
+        SELECT 
+            r.product_id AS productId,
+            COALESCE(p.name, 'Unknown Product') AS productName,
+            COUNT(r.id) as purchaseCount
+        FROM Record r
+        LEFT JOIN Product p ON p.id = r.product_id
+        GROUP BY r.product_id, p.name
+        ORDER BY purchaseCount DESC
+    """)
+    suspend fun getProductPurchaseCounts(): List<ProductPurchaseCount>
+
 }
+
+// New data class for product purchase counts
+data class ProductPurchaseCount(
+    val productId: Int,
+    val productName: String,
+    val purchaseCount: Int
+)
