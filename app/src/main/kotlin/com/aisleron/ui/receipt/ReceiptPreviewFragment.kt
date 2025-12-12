@@ -130,8 +130,9 @@ class ReceiptPreviewFragment : Fragment() {
                     itemAisleLocationName.clear()
                     itemAisleLocationName.putAll(newLocMap)
 
-                    adapter.submitList(list)
-                    updateSummary()
+                    adapter.submitList(list) {
+                        updateSummary()
+                    }
                 }
             },
             onUpdate = { index, item ->
@@ -144,8 +145,9 @@ class ReceiptPreviewFragment : Fragment() {
                     if (index in list.indices) {
                         // 只有在列表中的项仍然存在时才更新
                         list[index] = item
-                        adapter.submitList(list)
-                        updateSummary()
+                        adapter.submitList(list) {
+                            updateSummary()
+                        }
                     }
                     pendingRunnable = null
                 }
