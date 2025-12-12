@@ -16,13 +16,67 @@
   ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/frg_shopping_list"
-    android:name="com.aisleron.ui.shoppinglist.ShoppingListFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layoutManager="LinearLayoutManager"
-    tools:context=".ui.shoppinglist.ShoppingListFragment"
-    android:clipToPadding="false" />
+    android:orientation="vertical"
+    tools:context=".ui.shoppinglist.ShoppingListFragment">
+
+    <!-- Recommendations section -->
+    <LinearLayout
+        android:id="@+id/recommendations_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:padding="16dp"
+        android:background="@color/light_blue">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/today_recommendations"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:paddingBottom="8dp" />
+            
+            <TextView
+                android:id="@+id/recommendations_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You already checked"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:visibility="gone"
+                android:paddingBottom="8dp" />
+        </LinearLayout>
+            
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recommendations_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layoutManager="LinearLayoutManager" />
+            
+    </LinearLayout>
+
+    <!-- Main shopping list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/frg_shopping_list"
+        android:name="com.aisleron.ui.shoppinglist.ShoppingListFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:layoutManager="LinearLayoutManager"
+        tools:context=".ui.shoppinglist.ShoppingListFragment"
+        android:clipToPadding="false" />
+
+</LinearLayout>

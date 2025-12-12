@@ -101,10 +101,8 @@ class PhotosFragment : Fragment() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.extras?.get("data")?.let { photo ->
-                if (photo is Bitmap) {
-                    savePhotoFromBitmap(photo)
-                }
+            result.data?.extras?.getParcelable("data", Bitmap::class.java)?.let { photo ->
+                savePhotoFromBitmap(photo)
             }
         }
     }

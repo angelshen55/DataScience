@@ -19,12 +19,16 @@ package com.aisleron.domain.product.usecase
 
 import com.aisleron.data.TestDataManager
 import com.aisleron.domain.aisle.AisleRepository
+import com.aisleron.domain.aisle.usecase.AddAisleUseCaseImpl
 import com.aisleron.domain.aisle.usecase.GetDefaultAislesUseCase
+import com.aisleron.domain.aisle.usecase.IsAisleNameUniqueUseCase
 import com.aisleron.domain.aisleproduct.AisleProductRepository
 import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
 import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.location.LocationRepository
+import com.aisleron.domain.location.usecase.GetHomeLocationUseCase
+import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import kotlinx.coroutines.runBlocking
@@ -43,15 +47,28 @@ class AddProductUseCaseTest {
     fun setUp() {
         testData = TestDataManager()
         val productRepository = testData.getRepository<ProductRepository>()
+        val aisleRepository = testData.getRepository<AisleRepository>()
+        val aisleProductRepository = testData.getRepository<AisleProductRepository>()
+        val locationRepository = testData.getRepository<LocationRepository>()
+        val getLocationUseCase = GetLocationUseCase(locationRepository)
+        val addAisleUseCase = AddAisleUseCaseImpl(
+            aisleRepository,
+            getLocationUseCase,
+            IsAisleNameUniqueUseCase(aisleRepository)
+        )
 
         addProductUseCase = AddProductUseCaseImpl(
             productRepository,
             testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
-            GetDefaultAislesUseCase(testData.getRepository<AisleRepository>()),
-            AddAisleProductsUseCase(testData.getRepository<AisleProductRepository>()),
-            IsProductNameUniqueUseCase(testData.getRepository<ProductRepository>()),
+            GetDefaultAislesUseCase(aisleRepository),
+            AddAisleProductsUseCase(aisleProductRepository),
+            IsProductNameUniqueUseCase(productRepository),
             IsPricePositiveUseCase(),
-            GetAisleMaxRankUseCase(testData.getRepository<AisleProductRepository>())
+            GetAisleMaxRankUseCase(aisleProductRepository),
+            getLocationUseCase,
+            GetHomeLocationUseCase(locationRepository),
+            addAisleUseCase,
+            aisleRepository
         )
 
         existingProduct = runBlocking {

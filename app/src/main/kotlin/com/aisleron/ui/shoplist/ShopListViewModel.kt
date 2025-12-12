@@ -25,7 +25,11 @@ import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.location.usecase.GetPinnedShopsUseCase
 import com.aisleron.domain.location.usecase.GetShopsUseCase
 import com.aisleron.domain.location.usecase.RemoveLocationUseCase
+import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +40,7 @@ class ShopListViewModel(
     private val getPinnedShopsUseCase: GetPinnedShopsUseCase,
     private val removeLocationUseCase: RemoveLocationUseCase,
     private val getLocationUseCase: GetLocationUseCase,
+    private val getShoppingListUseCase: GetShoppingListUseCase,
     coroutineScopeProvider: CoroutineScope? = null
 ) : ViewModel() {
     private val coroutineScope = coroutineScopeProvider ?: this.viewModelScope
@@ -53,15 +58,42 @@ class ShopListViewModel(
     private fun hydrateShops(shopsFlow: Flow<List<Location>>) {
         coroutineScope.launch {
             _shopListUiState.value = ShopListUiState.Loading
-            shopsFlow.collect {
-                val items = it.map { l ->
+            shopsFlow.collect { locations ->
+                // For each location fetch the full location to count needed items concurrently
+                val deferredCounts = locations.map { loc ->
+                    coroutineScope.async {
+                        try {
+                            val full = getShoppingListUseCase(loc.id).first()
+                            full?.aisles?.sumOf { aisle ->
+                                aisle.products.count { ap -> !ap.product.inStock }
+                            } ?: 0
+                        } catch (e: Exception) {
+                            0
+                        }
+                    }
+                }
+
+                val counts = deferredCounts.awaitAll()
+
+                val items = locations.mapIndexed { idx, l ->
                     ShopListItemViewModel(
                         id = l.id,
                         defaultFilter = l.defaultFilter,
-                        name = l.name
+                        name = l.name,
+                        neededCount = counts.getOrNull(idx) ?: 0
                     )
                 }
-                _shopListUiState.value = ShopListUiState.Updated(items)
+
+                // pick recommended shop (max neededCount)
+                val maxItem = items.maxByOrNull { it.neededCount }
+                val recommendedName = if (maxItem != null && maxItem.neededCount > 0) maxItem.name else null
+                val recommendedNeededCount = if (maxItem != null && maxItem.neededCount > 0) maxItem.neededCount else 0
+
+                _shopListUiState.value = ShopListUiState.Updated(
+                    shops = items,
+                    recommendedShopName = recommendedName,
+                    recommendedNeededCount = recommendedNeededCount
+                )
             }
         }
     }
@@ -87,6 +119,10 @@ class ShopListViewModel(
             val errorCode: AisleronException.ExceptionCode, val errorMessage: String?
         ) : ShopListUiState()
 
-        data class Updated(val shops: List<ShopListItemViewModel>) : ShopListUiState()
+        data class Updated(
+            val shops: List<ShopListItemViewModel>,
+            val recommendedShopName: String? = null,
+            val recommendedNeededCount: Int = 0
+        ) : ShopListUiState()
     }
 }

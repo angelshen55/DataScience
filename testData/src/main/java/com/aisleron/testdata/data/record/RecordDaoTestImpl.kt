@@ -91,4 +91,19 @@ class RecordDaoTestImpl(private val productDao: ProductDaoTestImpl) : RecordDao 
             )
         }.sortedByDescending { it.date }
     }
+
+    override suspend fun getHistoryUiFiltered(
+        name: String?,
+        shop: String?,
+        startMillis: Long?,
+        endMillis: Long?
+    ): List<RecordWithProductUi> {
+        return getHistoryUi().filter { record ->
+            val matchesName = name.isNullOrBlank() || record.productName.contains(name, ignoreCase = true)
+            val matchesShop = shop.isNullOrBlank() || record.shop == shop
+            val matchesStart = startMillis == null || record.date.time >= startMillis
+            val matchesEnd = endMillis == null || record.date.time <= endMillis
+            matchesName && matchesShop && matchesStart && matchesEnd
+        }
+    }
 }
