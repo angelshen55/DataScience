@@ -27,7 +27,7 @@ data class RecordWithProductUi(
     val productId: Int,
     val productName: String,
     val unitPrice: Double,
-    val quantity: Int,
+    val quantity: Double,
     val shop: String,
     val totalCost: Double,
     val date: Date

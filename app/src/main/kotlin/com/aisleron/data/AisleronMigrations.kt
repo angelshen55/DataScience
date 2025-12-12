@@ -56,3 +56,30 @@ val MIGRATION_5_6: Migration = object : Migration(5, 6) {
     }
 }
 
+val MIGRATION_6_7: Migration = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `Record_new` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `product_id` INTEGER NOT NULL,
+                `date` INTEGER NOT NULL,
+                `stock` INTEGER NOT NULL,
+                `price` REAL NOT NULL,
+                `quantity` REAL NOT NULL DEFAULT 0.0,
+                `shop` TEXT NOT NULL DEFAULT 'shop1'
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            INSERT INTO `Record_new` (id, product_id, date, stock, price, quantity, shop)
+            SELECT id, product_id, date, stock, price, CAST(quantity AS REAL), shop FROM `Record`
+            """.trimIndent()
+        )
+
+        db.execSQL("DROP TABLE `Record`")
+        db.execSQL("ALTER TABLE `Record_new` RENAME TO `Record`")
+    }
+}

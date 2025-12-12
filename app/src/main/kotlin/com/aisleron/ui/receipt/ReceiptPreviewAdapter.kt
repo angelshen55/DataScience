@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aisleron.domain.receipt.ReceiptItem
 import com.aisleron.R
+import com.aisleron.utils.PriceInputUtils
 
 class ReceiptPreviewAdapter(
     private val onDelete: (Int) -> Unit,
@@ -95,10 +96,8 @@ class ReceiptPreviewAdapter(
                 etName.setText(item.name)
             }
 
-            val priceText = item.unitPrice.toPlainString()
-            val currentPrice = etPrice.text.toString()
-            if (currentPrice != priceText && !priceHasFocus) {
-                etPrice.setText(priceText)
+            if (!priceHasFocus) {
+                PriceInputUtils.setPriceText(etPrice, item.unitPrice.toDouble())
             }
 
             val qtyText = item.quantity.toString()
@@ -151,43 +150,75 @@ class ReceiptPreviewAdapter(
             val aisleName = getAisleName(bindingAdapterPosition)
             tvAisle.text = if (aisleName != null) "Aisle: $aisleName" else "Aisle: Not selected"
 
-            // 添加新的监听器
+            // 文本变化仅更新本地状态，不触发列表刷新，避免光标抖动
             nameWatcher = createTextWatcher { text ->
-                if (!isUpdating && bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                if (!isUpdating) {
                     val current = currentItem ?: return@createTextWatcher
-                    // 从其他 EditText 读取当前值以构建完整的 item
-                    val priceText = etPrice.text.toString()
-                    val qtyText = etQty.text.toString()
-                    val price = priceText.toBigDecimalOrNull() ?: current.unitPrice
-                    val qty = qtyText.toIntOrNull() ?: current.quantity
-                    onUpdate(bindingAdapterPosition, current.copy(name = text, unitPrice = price, quantity = qty))
+                    currentItem = current.copy(name = text)
                 }
             }
             etName.addTextChangedListener(nameWatcher)
 
-            priceWatcher = createTextWatcher { text ->
-                if (!isUpdating && bindingAdapterPosition != RecyclerView.NO_POSITION) {
-                    val current = currentItem ?: return@createTextWatcher
-                    val nameText = etName.text.toString()
-                    val qtyText = etQty.text.toString()
-                    val price = text.toBigDecimalOrNull() ?: current.unitPrice
-                    val qty = qtyText.toIntOrNull() ?: current.quantity
-                    onUpdate(bindingAdapterPosition, ReceiptItem(name = nameText, unitPrice = price, quantity = qty))
+            priceWatcher = createTextWatcher { _ ->
+                if (!isUpdating) {
+                    // 仅更新本地 currentItem 的价格文本由提交动作处理
                 }
             }
             etPrice.addTextChangedListener(priceWatcher)
 
             qtyWatcher = createTextWatcher { text ->
-                if (!isUpdating && bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                if (!isUpdating) {
                     val current = currentItem ?: return@createTextWatcher
-                    val nameText = etName.text.toString()
-                    val priceText = etPrice.text.toString()
-                    val price = priceText.toBigDecimalOrNull() ?: current.unitPrice
-                    val qty = text.toIntOrNull() ?: current.quantity
-                    onUpdate(bindingAdapterPosition, ReceiptItem(name = nameText, unitPrice = price, quantity = qty))
+                    val qty = text.toDoubleOrNull() ?: current.quantity
+                    currentItem = current.copy(quantity = qty)
                 }
             }
             etQty.addTextChangedListener(qtyWatcher)
+
+            // 回车/IME 提交：价格使用 PriceInputUtils，名称与数量使用类似的提交策略
+            PriceInputUtils.setupPriceEnterListenerWithIme(etPrice) {
+                if (bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                    val current = currentItem ?: item
+                    val priceTextNow = etPrice.text.toString()
+                    val price = priceTextNow.toDoubleOrNull() ?: current.unitPrice.toDouble()
+                    val newItem = ReceiptItem(
+                        name = etName.text.toString(),
+                        unitPrice = price.toBigDecimal(),
+                        quantity = etQty.text.toString().toDoubleOrNull() ?: current.quantity
+                    )
+                    onUpdate(bindingAdapterPosition, newItem)
+                }
+            }
+
+            etName.setOnEditorActionListener { _, actionId, _ ->
+                val commit = actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
+                        actionId == android.view.inputmethod.EditorInfo.IME_ACTION_NEXT
+                if (commit && bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                    val current = currentItem ?: item
+                    val newItem = current.copy(
+                        name = etName.text.toString(),
+                        unitPrice = (etPrice.text.toString().toDoubleOrNull() ?: current.unitPrice.toDouble()).toBigDecimal(),
+                        quantity = etQty.text.toString().toDoubleOrNull() ?: current.quantity
+                    )
+                    onUpdate(bindingAdapterPosition, newItem)
+                    true
+                } else false
+            }
+
+            etQty.setOnEditorActionListener { _, actionId, _ ->
+                val commit = actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
+                        actionId == android.view.inputmethod.EditorInfo.IME_ACTION_NEXT
+                if (commit && bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                    val current = currentItem ?: item
+                    val newItem = current.copy(
+                        name = etName.text.toString(),
+                        unitPrice = (etPrice.text.toString().toDoubleOrNull() ?: current.unitPrice.toDouble()).toBigDecimal(),
+                        quantity = etQty.text.toString().toDoubleOrNull() ?: current.quantity
+                    )
+                    onUpdate(bindingAdapterPosition, newItem)
+                    true
+                } else false
+            }
         }
 
         private fun createTextWatcher(onChange: (String) -> Unit): TextWatcher {
@@ -217,5 +248,3 @@ class ReceiptPreviewAdapter(
         }
     }
 }
-
-

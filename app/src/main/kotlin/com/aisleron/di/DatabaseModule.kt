@@ -24,6 +24,7 @@ import com.aisleron.data.AisleronDatabase
 import com.aisleron.data.DbInitializer
 import com.aisleron.data.MIGRATION_4_5
 import com.aisleron.data.MIGRATION_5_6
+import com.aisleron.data.MIGRATION_6_7
 import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
@@ -34,7 +35,7 @@ val databaseModule = module {
             AisleronDatabase::class.java,
             "aisleron.db"
         )
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             // .fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {

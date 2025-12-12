@@ -48,7 +48,7 @@ import com.aisleron.data.record.RecordDao
         RecordEntity::class
     ],
 
-    version = 6
+    version = 7
 )
 @TypeConverters(DateConverters::class)
 abstract class AisleronDatabase : AisleronDb, RoomDatabase() {
