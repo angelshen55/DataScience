@@ -34,6 +34,8 @@ import com.aisleron.R
 import com.aisleron.domain.aisle.Aisle
 import com.aisleron.domain.aisle.AisleRepository
 import com.aisleron.domain.location.Location
+import com.aisleron.domain.location.LocationType
+import com.aisleron.domain.FilterType
 import com.aisleron.domain.location.LocationRepository
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.usecase.AddProductUseCase
@@ -56,6 +58,7 @@ class ReceiptPreviewFragment : Fragment() {
 
     // 存储每个 item 的 aisle 选择
     private val itemAisleMap = mutableMapOf<Int, Aisle?>()
+    private val itemAisleLocationName = mutableMapOf<Int, String>()
 
     // Repositories and UseCases
     private val locationRepository: LocationRepository by inject()
@@ -106,16 +109,26 @@ class ReceiptPreviewFragment : Fragment() {
                     list.removeAt(index)
                     // 清理对应的 aisle 映射
                     itemAisleMap.remove(index)
+                    itemAisleLocationName.remove(index)
                     // 重新映射索引
                     val newAisleMap = mutableMapOf<Int, Aisle?>()
+                    val newLocMap = mutableMapOf<Int, String>()
                     itemAisleMap.forEach { (oldIdx, aisle) ->
                         when {
-                            oldIdx < index -> newAisleMap[oldIdx] = aisle
-                            oldIdx > index -> newAisleMap[oldIdx - 1] = aisle
+                            oldIdx < index -> {
+                                newAisleMap[oldIdx] = aisle
+                                itemAisleLocationName[oldIdx]?.let { newLocMap[oldIdx] = it }
+                            }
+                            oldIdx > index -> {
+                                newAisleMap[oldIdx - 1] = aisle
+                                itemAisleLocationName[oldIdx]?.let { newLocMap[oldIdx - 1] = it }
+                            }
                         }
                     }
                     itemAisleMap.clear()
                     itemAisleMap.putAll(newAisleMap)
+                    itemAisleLocationName.clear()
+                    itemAisleLocationName.putAll(newLocMap)
 
                     adapter.submitList(list)
                     updateSummary()
@@ -141,7 +154,11 @@ class ReceiptPreviewFragment : Fragment() {
                 view.postDelayed(pendingRunnable!!, 300)
             },
             onSelectAisle = { index -> showAisleSelectionDialog(index) },
-            getAisleName = { index -> itemAisleMap[index]?.name }
+            getAisleName = { index ->
+                val aisle = itemAisleMap[index]
+                val loc = itemAisleLocationName[index]
+                if (aisle != null && loc != null) "$loc · ${aisle.name}" else aisle?.name
+            }
         )
 
         rv.layoutManager = LinearLayoutManager(requireContext())
@@ -168,7 +185,7 @@ class ReceiptPreviewFragment : Fragment() {
     private fun updateSummary() {
         val items = adapter.currentList
         val total = items.fold(BigDecimal.ZERO) { acc, it ->
-            acc + (it.unitPrice.multiply(BigDecimal(it.quantity)))
+            acc + it.unitPrice.multiply(java.math.BigDecimal.valueOf(it.quantity))
         }
         tvSummary?.text = "Items: ${items.size}   Total: ${total.toPlainString()}"
     }
@@ -193,21 +210,106 @@ class ReceiptPreviewFragment : Fragment() {
             val aisleDisplayNames = allAisles.map { aisle ->
                 val location = locationMap[aisle.locationId]
                 val locationName = location?.name ?: "Unknown"
-                "$aisle.name ($locationName)"
+                "${aisle.name} (${locationName})"
             }.toTypedArray()
 
             val currentAisle = itemAisleMap[itemIndex]
             val selectedIndex = currentAisle?.let { allAisles.indexOf(it) } ?: -1
 
-            AlertDialog.Builder(requireContext())
-                .setTitle("Select Aisle")
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Aisle")
                 .setSingleChoiceItems(aisleDisplayNames, selectedIndex) { dialog, which ->
-                    itemAisleMap[itemIndex] = allAisles[which]
+                    val selectedAisle = allAisles[which]
+                    itemAisleMap[itemIndex] = selectedAisle
+                    val locName = locationMap[selectedAisle.locationId]?.name ?: "Unknown"
+                    itemAisleLocationName[itemIndex] = locName
                     adapter.notifyItemChanged(itemIndex)
                     dialog.dismiss()
                 }
-                .setNeutralButton("Create New") { _, _ ->
-                    showCreateAisleDialog(itemIndex)
+            .setNeutralButton("Create New Aisle") { _, _ ->
+                showCreateAisleDialog(itemIndex)
+            }
+            .setPositiveButton("Create New Location") { _, _ ->
+                showCreateLocationThenAisleDialog(itemIndex)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+        }
+    }
+
+    private fun showCreateLocationThenAisleDialog(itemIndex: Int) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val locationNameInput = android.widget.EditText(requireContext())
+            locationNameInput.hint = "Location name"
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Create New Location")
+                .setView(locationNameInput)
+                .setPositiveButton("Create") { _, _ ->
+                    val locationName = locationNameInput.text.toString().trim()
+                    if (locationName.isNotEmpty()) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try {
+                                val newLocation = withContext(Dispatchers.IO) {
+                                    val newLocationId = addLocationUseCase(
+                                        Location(
+                                            id = 0,
+                                            type = LocationType.SHOP,
+                                            defaultFilter = FilterType.NEEDED,
+                                            name = locationName,
+                                            pinned = false,
+                                            aisles = emptyList(),
+                                            showDefaultAisle = true
+                                        )
+                                    )
+                                    getLocationUseCase(newLocationId)
+                                }
+
+                                val aisleNameInput = android.widget.EditText(requireContext())
+                                aisleNameInput.hint = "Aisle name"
+
+                                AlertDialog.Builder(requireContext())
+                                    .setTitle("Create New Aisle in ${newLocation?.name ?: "Unknown"}")
+                                    .setView(aisleNameInput)
+                                    .setPositiveButton("Create") { _, _ ->
+                                        val aisleName = aisleNameInput.text.toString().trim()
+                                        if (aisleName.isNotEmpty() && newLocation != null) {
+                                            viewLifecycleOwner.lifecycleScope.launch {
+                                                try {
+                                                    val newAisle = withContext(Dispatchers.IO) {
+                                                        val existingAisles = aisleRepository.getForLocation(newLocation.id)
+                                                        val maxRank = existingAisles.maxOfOrNull { it.rank } ?: 0
+                                                        val newRank = maxRank + 100
+                                                        val aisle = Aisle(
+                                                            name = aisleName,
+                                                            products = emptyList(),
+                                                            locationId = newLocation.id,
+                                                            rank = newRank,
+                                                            id = 0,
+                                                            isDefault = false,
+                                                            expanded = true
+                                                        )
+                                                        val aisleId = addAisleUseCase(aisle)
+                                                        aisleRepository.get(aisleId)
+                                                    }
+                                                    newAisle?.let {
+                                                        itemAisleMap[itemIndex] = it
+                                                        itemAisleLocationName[itemIndex] = newLocation?.name ?: "Unknown"
+                                                        adapter.notifyItemChanged(itemIndex)
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(requireContext(), "Error creating aisle: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .setNegativeButton("Cancel", null)
+                                    .show()
+                            } catch (e: Exception) {
+                                Toast.makeText(requireContext(), "Error creating location: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -261,6 +363,7 @@ class ReceiptPreviewFragment : Fragment() {
                                         }
                                         newAisle?.let {
                                             itemAisleMap[itemIndex] = it
+                                            itemAisleLocationName[itemIndex] = selectedLocation.name
                                             adapter.notifyItemChanged(itemIndex)
                                         }
                                     } catch (e: Exception) {

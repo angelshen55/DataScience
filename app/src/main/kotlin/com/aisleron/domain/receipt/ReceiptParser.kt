@@ -31,10 +31,10 @@ data class ReceiptItemRaw(
 data class ReceiptItem(
     val name: String,
     val unitPrice: BigDecimal,
-    val quantity: Int = 1
+    val quantity: Double = 0.0
 ) {
     val totalPrice: BigDecimal
-        get() = unitPrice.multiply(BigDecimal(quantity))
+        get() = unitPrice.multiply(java.math.BigDecimal.valueOf(quantity))
 }
 
 data class ReceiptParseResult(
@@ -212,7 +212,7 @@ object ReceiptParser {
         val name = extractItemName(line, prices, config)
         if (name.isBlank()) return ItemParseResult(success = false)
 
-        val quantity = if (config.enableQuantityDetection) extractQuantity(line, priceValue) else 1
+        val quantity = if (config.enableQuantityDetection) extractQuantity(line, priceValue) else 0.0
 
         return ItemParseResult(
             success = true,
@@ -240,7 +240,7 @@ object ReceiptParser {
         val name = extractItemName(nameLine, emptyList(), config)
         if (name.isBlank()) return ItemParseResult(success = false)
 
-        val quantity = if (config.enableQuantityDetection) extractQuantity(line1, priceValue) else 1
+        val quantity = if (config.enableQuantityDetection) extractQuantity(line1, priceValue) else 0.0
 
         return ItemParseResult(
             success = true,
@@ -329,7 +329,7 @@ object ReceiptParser {
         return name
     }
 
-    private fun extractQuantity(line: String, unitPrice: BigDecimal): Int {
+    private fun extractQuantity(line: String, unitPrice: BigDecimal): Double {
         val patterns = listOf(
             Regex("(\\d+)\\s*(组|个|件|包|瓶|袋|盒)"),
             Regex("(\\d+)\\s*[xX*]"),
@@ -339,11 +339,11 @@ object ReceiptParser {
         patterns.forEach { pattern ->
             val match = pattern.find(line)
             if (match != null) {
-                return match.groupValues[1].toIntOrNull() ?: 1
+                return match.groupValues[1].toDoubleOrNull() ?: 0.0
             }
         }
 
-        return 1
+        return 0.0
     }
 
     private fun isHeaderOrFooter(line: String): Boolean {

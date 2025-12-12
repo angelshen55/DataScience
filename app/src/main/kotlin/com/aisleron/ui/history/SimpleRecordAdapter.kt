@@ -52,6 +52,7 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
         val r = items[position]
 
         holder.title.text = "Loading... • ${df.format(r.date)}"
+        holder.sub.text = "Qty: ${String.format("%.2f", r.quantity)} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)} | Stock: ${r.stock}"
         run {
             val parts = mutableListOf(
                 "Qty: ${r.quantity}",
@@ -71,6 +72,7 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
                     withContext(Dispatchers.Main) {
                         val productName = product?.name ?: "Unknown Product"
                         holder.title.text = "$productName • ${df.format(r.date)}"
+                        holder.sub.text = "Qty: ${String.format("%.2f", r.quantity)} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)} | Stock: ${r.stock}"
                         val parts = mutableListOf(
                             "Qty: ${r.quantity}",
                             "Shop: ${r.shop}"
@@ -84,6 +86,7 @@ class SimpleRecordAdapter : RecyclerView.Adapter<SimpleRecordAdapter.VH>() {
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         holder.title.text = "Product #${r.productId} • ${df.format(r.date)}"
+                        holder.sub.text = "Qty: ${String.format("%.2f", r.quantity)} | Shop: ${r.shop} | Total: $${String.format("%.2f", r.price * r.quantity)}"
                         val parts = mutableListOf(
                             "Qty: ${r.quantity}",
                             "Shop: ${r.shop}"

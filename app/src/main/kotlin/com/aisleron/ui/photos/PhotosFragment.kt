@@ -55,6 +55,7 @@ import org.koin.android.ext.android.inject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import com.google.mlkit.vision.common.InputImage
@@ -70,6 +71,8 @@ import android.content.Context
 import com.google.android.material.button.MaterialButton
 import android.widget.EditText
 import android.widget.TextView
+import android.util.Base64
+import com.aisleron.data.receipt.ReceiptRemoteParser
 
 
 // Photo upload and recognize text from image
@@ -85,8 +88,8 @@ class PhotosFragment : Fragment() {
     private lateinit var photosRecycler: RecyclerView
     private val photosAdapter = PhotoAdapter (
         { photoPath ->
-        deletePhoto(photoPath)
-    },
+            deletePhoto(photoPath)
+        },
         onScanTextClick = { photoPath ->
             scanTextFromPhoto(photoPath)
         }
@@ -333,96 +336,37 @@ class PhotosFragment : Fragment() {
     }
 
     private fun scanTextFromPhoto(photoPath: String) {
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+        val bitmap = BitmapFactory.decodeFile(photoPath)
+        if (bitmap == null) {
+            Toast.makeText(requireContext(), "无法加载图片进行解析", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
             try {
-                val bitmap = BitmapFactory.decodeFile(photoPath)
-                if (bitmap != null) {
-                    performOcrOnPhoto(bitmap, photoPath)
-                } else {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                sendBitmapToRemoteParserAndShowPreview(bitmap, photoPath)
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error scanning text: ${e.message}", Toast.LENGTH_SHORT).show()
+                withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "远端解析失败: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
 
     private fun performOcrOnPhoto(bitmap: Bitmap, filePath: String) {
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch {
             try {
-//                val ocrResult = recognizeTextFromBitmap(bitmap, useChineseRecognizer = true)
-                val ocrResult = recognizeBestTextFromBitmap(bitmap)
-
-                withContext(Dispatchers.Main) {
-                    if (ocrResult.isNotBlank()) {
-                        showOcrResult(ocrResult, filePath)
-                    } else {
-                        Toast.makeText(requireContext(), "No text detected in image", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                sendBitmapToRemoteParserAndShowPreview(bitmap, filePath)
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "OCR failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "远端解析失败: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
-    }
-
-    private suspend fun recognizeTextFromBitmap(
-        bitmap: Bitmap,
-        useChineseRecognizer: Boolean = true
-    ): String = suspendCancellableCoroutine { continuation ->
-        val image = InputImage.fromBitmap(bitmap, 0)
-
-        val recognizer = if (useChineseRecognizer) {
-            TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
-        } else {
-            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        }
-
-        recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                val recognizedText = visionText.text
-                continuation.resume(recognizedText)
-            }
-            .addOnFailureListener { exception ->
-                continuation.resumeWithException(exception)
-            }
-
-        continuation.invokeOnCancellation {
-            recognizer.close()
-        }
-    }
-    private suspend fun recognizeBestTextFromBitmap(bitmap: Bitmap): String {
-        // Run both recognizers sequentially and choose the richer result
-        // This helps when images contain mixed Chinese and English text
-        val chinese = recognizeTextFromBitmap(bitmap, useChineseRecognizer = true)
-        val latin = recognizeTextFromBitmap(bitmap, useChineseRecognizer = false)
-
-        if (chinese.isBlank() && latin.isNotBlank()) return latin
-        if (latin.isBlank() && chinese.isNotBlank()) return chinese
-
-        // If both have content, prefer the longer one (rough heuristic)
-        return if (chinese.length >= latin.length) chinese else latin
     }
 
     private fun showOcrResult(recognizedText: String, filePath: String) {
-        try {
-            val result = com.aisleron.domain.receipt.ReceiptParser.parse(recognizedText, java.util.Locale.getDefault())
-            val receiptPreviewBundle = com.aisleron.ui.bundles.ReceiptPreviewBundle.fromReceiptItems(result.items)
-            // Navigation Component 需要将 argument 名称作为 key
-            val bundle = Bundle().apply {
-                putParcelable("receiptPreview", receiptPreviewBundle)
-            }
-            findNavController().navigate(R.id.nav_receipt_preview, bundle)
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Navigation failed: ${e.message}", Toast.LENGTH_LONG).show()
-            e.printStackTrace()
-        }
+        // 重定向：如果已有图片路径，使用远端解析流程（避免使用本地 ReceiptParser）
+        scanTextFromPhoto(filePath)
     }
 
     private fun updateSelectionInfo(
@@ -481,5 +425,56 @@ class PhotosFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun sendBitmapToRemoteParserAndShowPreview(bitmap: Bitmap, filePath: String) {
+        lifecycleScope.launch {
+            try {
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                val items = ReceiptRemoteParser.parseImageBase64(base64)
+                navigateToReceiptPreview(items)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "远程解析失败: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun sendBitmapToBaiduAndShowPreview(bitmap: Bitmap, filePath: String) {
+        lifecycleScope.launch {
+            try {
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                val items = ReceiptRemoteParser.parseImageBase64(base64)
+                if (items.isEmpty()) {
+                    Toast.makeText(requireContext(), "未识别到商品信息", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                navigateToReceiptPreview(items)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "识别失败: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    // 新增：处理确认后的 items，导航到 ReceiptPreviewFragment（复用现有 ReceiptPreviewBundle）
+    private fun handleConfirmedReceiptItems(items: List<com.aisleron.domain.receipt.ReceiptItem>) {
+        try {
+            val receiptPreviewBundle = com.aisleron.ui.bundles.ReceiptPreviewBundle.fromReceiptItems(items)
+            val bundle = Bundle().apply {
+                putParcelable("receiptPreview", receiptPreviewBundle)
+            }
+            findNavController().navigate(R.id.nav_receipt_preview, bundle)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Navigation failed: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+        }
+    }
+
+    // 将 navigateToReceiptPreview 简单实现为调用 handleConfirmedReceiptItems
+    private fun navigateToReceiptPreview(items: List<com.aisleron.domain.receipt.ReceiptItem>) {
+        handleConfirmedReceiptItems(items)
     }
 }
