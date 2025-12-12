@@ -16,15 +16,48 @@
   ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/shop_list"
-    android:name="com.aisleron.ui.ShopListFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="@dimen/text_margin"
-    app:layoutManager="LinearLayoutManager"
-    tools:context=".ui.shoplist.ShopListFragment"
-    tools:listitem="@layout/fragment_shop_list_item"
-    android:clipToPadding="false" />
+    android:orientation="vertical"
+    android:padding="@dimen/text_margin"
+    tools:context=".ui.shoplist.ShopListFragment">
+
+  
+
+    <com.google.android.material.card.MaterialCardView
+      android:id="@+id/hello_world_message_box"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="12dp"
+      app:cardBackgroundColor="?attr/colorSurface"
+      app:cardElevation="0dp"
+      app:strokeWidth="0dp">
+
+    <TextView
+      android:id="@+id/recommendation_message"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:contentDescription="Recommendation message"
+      android:paddingBottom="8dp"
+      android:textAppearance="?attr/textAppearanceBody1"
+      android:textStyle="bold"
+      android:visibility="gone" />
+
+
+    </com.google.android.material.card.MaterialCardView>
+
+  <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/shop_list"
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1"
+      android:clipToPadding="false"
+      app:layoutManager="LinearLayoutManager"
+      tools:listitem="@layout/fragment_aisle_list_item" />
+
+
+</LinearLayout>

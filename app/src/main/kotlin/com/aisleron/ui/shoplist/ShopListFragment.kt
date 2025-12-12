@@ -36,6 +36,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.util.Log
 import com.aisleron.R
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.ui.AisleronExceptionMap
@@ -92,34 +93,52 @@ class ShopListFragment(private val fabHandler: FabHandler) : Fragment(), ActionM
 
         val view = inflater.inflate(R.layout.fragment_shop_list, container, false)
 
-        // Set the adapter
-        if (view is RecyclerView) {
-            setWindowInsetListeners(this, view, true, R.dimen.text_margin)
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    shopListViewModel.shopListUiState.collect {
-                        when (it) {
-                            is ShopListViewModel.ShopListUiState.Error -> {
-                                displayErrorSnackBar(it.errorCode, it.errorMessage)
-                            }
+        val recycler = view.findViewById<RecyclerView>(R.id.shop_list)
+        val recommendation = view.findViewById<android.view.View>(R.id.recommendation_message)
 
-                            is ShopListViewModel.ShopListUiState.Updated -> {
-                                (view.adapter as ShopListItemRecyclerViewAdapter).submitList(it.shops)
-                            }
+        setWindowInsetListeners(this, recycler, true, R.dimen.text_margin)
 
-                            else -> Unit
+        recycler.apply {
+            layoutManager = when {
+                columnCount <= 1 -> LinearLayoutManager(context)
+                else -> GridLayoutManager(context, columnCount)
+            }
+            adapter = ShopListItemRecyclerViewAdapter(this@ShopListFragment)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                shopListViewModel.shopListUiState.collect { state ->
+                    when (state) {
+                        is ShopListViewModel.ShopListUiState.Error -> {
+                            displayErrorSnackBar(state.errorCode, state.errorMessage)
                         }
+
+                        is ShopListViewModel.ShopListUiState.Updated -> {
+                            (recycler.adapter as ShopListItemRecyclerViewAdapter).submitList(state.shops)
+
+                            val recommendedShopName = state.recommendedShopName
+                            val recommendedNeededCount = state.recommendedNeededCount
+
+                            val tv = view.findViewById<android.widget.TextView>(R.id.recommendation_message)
+                            Log.d(
+                                "ShopListFragment",
+                                "Recommendation state: name=$recommendedShopName count=$recommendedNeededCount shops=${state.shops.map { it.name + ":" + it.neededCount }}"
+                            )
+                            if (recommendedShopName != null && recommendedNeededCount > 0) {
+                                tv.visibility = android.view.View.VISIBLE
+                                tv.text = getString(R.string.recommendation_message_template, recommendedShopName, recommendedNeededCount)
+                            } else {
+                                tv.visibility = android.view.View.GONE
+                            }
+                        }
+
+                        else -> Unit
                     }
                 }
             }
-            with(view) {
-                layoutManager = when {
-                    columnCount <= 1 -> LinearLayoutManager(context)
-                    else -> GridLayoutManager(context, columnCount)
-                }
-                adapter = ShopListItemRecyclerViewAdapter(this@ShopListFragment)
-            }
         }
+
         return view
     }
 

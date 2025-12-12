@@ -31,6 +31,7 @@ import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.location.usecase.GetPinnedShopsUseCase
 import com.aisleron.domain.location.usecase.GetShopsUseCase
 import com.aisleron.domain.location.usecase.RemoveLocationUseCase
+import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -129,6 +130,7 @@ class ShopListViewModelTest : KoinTest {
                 }
             },
             getLocationUseCase = get<GetLocationUseCase>(),
+            getShoppingListUseCase = get<GetShoppingListUseCase>(),
             coroutineScopeProvider = TestScope(UnconfinedTestDispatcher())
         )
 
@@ -158,7 +160,8 @@ class ShopListViewModelTest : KoinTest {
             getShopsUseCase = get<GetShopsUseCase>(),
             getPinnedShopsUseCase = get<GetPinnedShopsUseCase>(),
             removeLocationUseCase = get<RemoveLocationUseCase>(),
-            getLocationUseCase = get<GetLocationUseCase>()
+            getLocationUseCase = get<GetLocationUseCase>(),
+            getShoppingListUseCase = get<GetShoppingListUseCase>()
         )
 
         Assert.assertNotNull(sli)
