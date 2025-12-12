@@ -1,16 +1,16 @@
 package com.aisleron.ui.history
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import android.app.DatePickerDialog
-import java.util.Calendar
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.aisleron.R
@@ -19,12 +19,16 @@ import com.aisleron.domain.record.RecordRepository
 import com.aisleron.domain.product.ProductRepository
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import java.util.Calendar
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 
 /**
  * Purchase History Pager Fragment
  * show all purchase record
  */
-class PurchaseHistoryFragment : Fragment() {
+class PurchaseHistoryFragment : Fragment(), MenuProvider {
     
     private val recordRepository: RecordRepository by inject()
     private val productRepository: ProductRepository by inject()
@@ -32,7 +36,6 @@ class PurchaseHistoryFragment : Fragment() {
     
     private lateinit var recycler: RecyclerView
     private val adapter = SimpleRecordAdapter()
-    private var menuProvider: MenuProvider? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, 
@@ -56,32 +59,59 @@ class PurchaseHistoryFragment : Fragment() {
                 adapter.submit(list, productRepository)
             }
         }
-
-        val menuHost: MenuHost = requireActivity()
-        val provider = object : MenuProvider {
-            override fun onCreateMenu(menu: android.view.Menu, menuInflater: android.view.MenuInflater) {
-                menuInflater.inflate(R.menu.menu_purchase_history, menu)
-            }
-
-            override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean {
-                if (menuItem.itemId == R.id.action_filter) {
-                    showFilterDialog()
-                    return true
-                }
-                return false
-            }
+        
+        // Add menu provider using viewLifecycleOwner so it's automatically removed when view is destroyed
+        // This is the same pattern used by ShoppingListFragment
+        val menuHost = requireActivity()
+        menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+    
+    // MenuProvider methods
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        // Only create menu if this fragment is actually visible and we're on the history page
+        if (!shouldShowMenu()) {
+            return
         }
-        menuProvider = provider
-        menuHost.addMenuProvider(provider, viewLifecycleOwner, Lifecycle.State.RESUMED)
+        
+        menuInflater.inflate(R.menu.menu_purchase_history, menu)
+    }
+    
+    private fun shouldShowMenu(): Boolean {
+        // Check if fragment is attached and visible
+        if (!isAdded || view == null) {
+            return false
+        }
+        
+        // Check if fragment is visible (for ViewPager2)
+        if (!isVisible) {
+            return false
+        }
+        
+        // Check if parent fragment (HistoryFragment) is visible
+        val parent = parentFragment
+        if (parent != null && (!parent.isVisible || !parent.isResumed)) {
+            return false
+        }
+        
+        // Check if we're currently on the history navigation destination
+        return try {
+            val navController = findNavController()
+            navController.currentDestination?.id == R.id.nav_history
+        } catch (e: Exception) {
+            false
+        }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        val menuHost: MenuHost = requireActivity()
-        menuProvider?.let { menuHost.removeMenuProvider(it) }
-        menuProvider = null
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.action_filter -> {
+                showFilterDialog()
+                true
+            }
+            else -> false
+        }
     }
-
+    
     private fun showFilterDialog() {
         val ctx = requireContext()
         val view = layoutInflater.inflate(R.layout.dialog_history_filters, null)

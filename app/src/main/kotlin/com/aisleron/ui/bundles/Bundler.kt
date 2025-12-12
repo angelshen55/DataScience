@@ -142,6 +142,16 @@ class Bundler {
 
     }
 
+    fun makeReceiptPreviewBundle(items: List<com.aisleron.domain.receipt.ReceiptItem>): Bundle {
+        val receiptPreviewBundle = ReceiptPreviewBundle.fromReceiptItems(items)
+        // 使用与导航图参数名称匹配的 key
+        return makeParcelableBundle("receiptPreview", receiptPreviewBundle)
+    }
+
+    fun getReceiptPreviewBundle(bundle: Bundle?): ReceiptPreviewBundle? {
+        // 使用与导航图参数名称匹配的 key
+        return getParcelableBundle(bundle, "receiptPreview", ReceiptPreviewBundle::class.java)
+    }
     private companion object BundleType {
         const val ADD_EDIT_PRODUCT = "addEditProduct"
         const val ADD_EDIT_LOCATION = "addEditLocation"

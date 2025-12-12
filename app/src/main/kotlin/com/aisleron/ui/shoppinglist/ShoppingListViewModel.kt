@@ -26,6 +26,9 @@ import com.aisleron.domain.aisle.usecase.RemoveAisleUseCase
 import com.aisleron.domain.aisle.usecase.UpdateAisleExpandedUseCase
 import com.aisleron.domain.aisle.usecase.UpdateAisleRankUseCase
 import com.aisleron.domain.aisleproduct.AisleProduct
+import com.aisleron.domain.aisleproduct.AisleProductRepository
+import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
+import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
 import com.aisleron.domain.aisleproduct.usecase.UpdateAisleProductRankUseCase
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.location.Location
@@ -33,11 +36,16 @@ import com.aisleron.domain.location.LocationType
 import com.aisleron.domain.location.usecase.SortLocationByNameUseCase
 import com.aisleron.domain.loyaltycard.LoyaltyCard
 import com.aisleron.domain.loyaltycard.usecase.GetLoyaltyCardForLocationUseCase
+import com.aisleron.domain.product.Product
+import com.aisleron.domain.product.ProductRecommendation
+import com.aisleron.domain.product.usecase.GetProductRecommendationsUseCase
 import com.aisleron.domain.product.usecase.RemoveProductUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCase
 import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
+import com.aisleron.domain.aisle.usecase.GetDefaultAisleForLocationUseCase
 import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
+import com.aisleron.ui.settings.ShoppingListPreferencesImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -58,6 +66,13 @@ class ShoppingListViewModel(
     private val getLoyaltyCardForLocationUseCase: GetLoyaltyCardForLocationUseCase,
     private val updateProductQtyNeededUseCase: UpdateProductQtyNeededUseCase,
     private val updateProductPriceUseCase: UpdateProductPriceUseCase,
+    // New dependency for recommendations
+    private val getProductRecommendationsUseCase: GetProductRecommendationsUseCase,
+    private val getDefaultAisleForLocationUseCase: GetDefaultAisleForLocationUseCase,
+    private val addAisleProductsUseCase: AddAisleProductsUseCase,
+    private val getAisleMaxRankUseCase: GetAisleMaxRankUseCase,
+    private val aisleProductRepository: AisleProductRepository,
+    private val getProductUseCase: com.aisleron.domain.product.usecase.GetProductUseCase,
     private val debounceTime: Long = 300,
     coroutineScopeProvider: CoroutineScope? = null
 ) : ViewModel() {
@@ -170,6 +185,73 @@ class ShoppingListViewModel(
         )
     }
 
+    // Store context for preference access
+    private var _context: android.content.Context? = null
+    
+    fun setContext(context: android.content.Context) {
+        _context = context
+    }
+    
+    val context: android.content.Context? get() = _context
+    
+    // Store today's recommendations and date
+    private var todayRecommendations: List<ProductRecommendation>? = null
+    private var todayRecommendationsDate: Long = 0L
+    
+    private fun isToday(date: Long): Boolean {
+        if (date == 0L) return false
+        val dateCalendar = java.util.Calendar.getInstance().apply { timeInMillis = date }
+        val todayCalendar = java.util.Calendar.getInstance()
+        return dateCalendar.get(java.util.Calendar.YEAR) == todayCalendar.get(java.util.Calendar.YEAR) &&
+               dateCalendar.get(java.util.Calendar.DAY_OF_YEAR) == todayCalendar.get(java.util.Calendar.DAY_OF_YEAR)
+    }
+    
+    fun loadRecommendations() {
+        coroutineScope.launch {
+            if (_context != null) {
+                val preferences = com.aisleron.ui.settings.ShoppingListPreferencesImpl()
+                val currentTime = System.currentTimeMillis()
+                val storedDate = preferences.getTodayRecommendationsDate(_context!!)
+                
+                // Check if this is the first time showing recommendations today
+                val isFirstTimeToday = !isToday(storedDate)
+                
+                // Check if we have recommendations for today in memory cache
+                val recommendations = if (isToday(todayRecommendationsDate) && todayRecommendations != null) {
+                    // Use cached recommendations for today
+                    todayRecommendations!!
+                } else {
+                    // Get new recommendations and cache them
+                    val newRecommendations = getProductRecommendationsUseCase()
+                    todayRecommendations = newRecommendations
+                    todayRecommendationsDate = currentTime
+                    // Update the date to mark that we've shown recommendations today (only on first time)
+                    if (isFirstTimeToday) {
+                        preferences.setTodayRecommendationsDate(_context!!, currentTime)
+                    }
+                    newRecommendations
+                }
+                
+                // Update the UI with recommendations
+                val currentShoppingList = getShoppingList(_location, shoppingListFilterParameters)
+                
+                // Always show recommendations UI, even if empty
+                _shoppingListUiState.value = ShoppingListUiState.UpdatedWithRecommendations(
+                    currentShoppingList,
+                    recommendations,
+                    isFirstTimeToday = isFirstTimeToday
+                )
+            }
+        }
+    }
+    
+    fun hideRecommendations() {
+        coroutineScope.launch {
+            val currentShoppingList = getShoppingList(_location, shoppingListFilterParameters)
+            _shoppingListUiState.value = ShoppingListUiState.Updated(currentShoppingList)
+        }
+    }
+
     fun hydrate(locationId: Int, filterType: FilterType, showEmptyAisles: Boolean = false) {
         _defaultFilter = filterType
         _showEmptyAisles = showEmptyAisles
@@ -192,10 +274,27 @@ class ShoppingListViewModel(
                     _loyaltyCard = getLoyaltyCardForLocationUseCase(it.id)
                 }
 
-                _shoppingListUiState.value =
-                    ShoppingListUiState.Updated(
+                // Check if we should show recommendations (only for ALL filter)
+                if (filterType == FilterType.ALL && _context != null) {
+                    val preferences = com.aisleron.ui.settings.ShoppingListPreferencesImpl()
+                    // Show recommendations if we haven't shown them today
+                    if (preferences.shouldShowRecommendationsToday(_context!!)) {
+                        val recommendations = getProductRecommendationsUseCase()
+                        
+                        _shoppingListUiState.value = ShoppingListUiState.UpdatedWithRecommendations(
+                            getShoppingList(_location, shoppingListFilterParameters),
+                            recommendations
+                        )
+                    } else {
+                        _shoppingListUiState.value = ShoppingListUiState.Updated(
+                            getShoppingList(_location, shoppingListFilterParameters)
+                        )
+                    }
+                } else {
+                    _shoppingListUiState.value = ShoppingListUiState.Updated(
                         getShoppingList(_location, shoppingListFilterParameters)
                     )
+                }
             }
         }
     }
@@ -203,6 +302,44 @@ class ShoppingListViewModel(
     fun updateProductStatus(item: ProductShoppingListItem, inStock: Boolean) {
         coroutineScope.launch {
             updateProductStatusUseCase(item.id, inStock)
+        }
+    }
+    
+    /**
+     * Add product to current location's default aisle if it's not already in any aisle of that location
+     */
+    suspend fun addProductToCurrentLocationIfNeeded(productId: Int, locationId: Int) {
+        // Get product
+        val product = getProductUseCase(productId) ?: return
+        
+        // Get all aisles where this product exists
+        val productAisles = aisleProductRepository.getProductAisles(productId)
+        
+        // Check if product is already in any aisle of the current location
+        val isInCurrentLocation = productAisles.any { ap ->
+            val aisle = getAisleUseCase(ap.aisleId)
+            aisle?.locationId == locationId
+        }
+        
+        // If not in current location, add to default aisle
+        if (!isInCurrentLocation) {
+            val defaultAisle = getDefaultAisleForLocationUseCase(locationId)
+            if (defaultAisle != null) {
+                // Check if product is already in this aisle (shouldn't happen, but check anyway)
+                val isInDefaultAisle = productAisles.any { it.aisleId == defaultAisle.id }
+                if (!isInDefaultAisle) {
+                    addAisleProductsUseCase(
+                        listOf(
+                            AisleProduct(
+                                aisleId = defaultAisle.id,
+                                product = product,
+                                rank = getAisleMaxRankUseCase(defaultAisle) + 1,
+                                id = 0
+                            )
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -334,5 +471,12 @@ class ShoppingListViewModel(
         ) : ShoppingListUiState()
 
         data class Updated(val shoppingList: List<ShoppingListItem>) : ShoppingListUiState()
+        
+        // New state for recommendations
+        data class UpdatedWithRecommendations(
+            val shoppingList: List<ShoppingListItem>,
+            val recommendations: List<ProductRecommendation>,
+            val isFirstTimeToday: Boolean = true
+        ) : ShoppingListUiState()
     }
 }

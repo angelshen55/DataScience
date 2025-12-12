@@ -18,12 +18,15 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.Properties
+import java.io.File
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.parcelize")
+    // Uncomment when Firebase is configured:
+    // id("com.google.gms.google-services")
 
     id("com.autonomousapps.dependency-analysis")
 }
@@ -66,13 +69,24 @@ android {
 
     defaultConfig {
         applicationId = "com.aisleron"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 35
-        versionCode = 10
-        versionName = "2025.7.0"
-        base.archivesName = "$applicationId-$versionName"
+        versionCode = 1
+        versionName = "1.0"
 
-        testInstrumentationRunner = "com.aisleron.di.KoinInstrumentationTestRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // load local.properties (root) and inject BAIDU credentials into BuildConfig
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(FileInputStream(localPropsFile))
+        }
+        val baiduClientId = localProps.getProperty("baidu.client_id", "")
+        val baiduClientSecret = localProps.getProperty("baidu.client_secret", "")
+
+        buildConfigField("String", "BAIDU_CLIENT_ID", "\"$baiduClientId\"")
+        buildConfigField("String", "BAIDU_CLIENT_SECRET", "\"$baiduClientSecret\"")
     }
 
     ksp {
@@ -181,12 +195,27 @@ dependencies {
     //Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
+    //HTTP Client & JSON
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
     //diagrams
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     //ML Kit for OCR
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    
+    // Network libraries for API calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Firebase Analytics (uncomment when Firebase is configured)
+    // implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    // implementation("com.google.firebase:firebase-analytics-ktx")
 
     //Testing
     implementation("androidx.lifecycle:lifecycle-runtime-testing:2.9.2")
@@ -203,16 +232,17 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     androidTestImplementation("io.insert-koin:koin-test:4.1.0")
+    androidTestImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("org.hamcrest:hamcrest:2.2")
     androidTestImplementation("androidx.test:core-ktx:1.7.0")
     androidTestImplementation("androidx.navigation:navigation-testing:2.9.3")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
-
-    androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    //org.hamcrest:hamcrest:2.2 dependency of:
-    // androidx.test.espresso:espresso-core:3.6.1
-    // androidx.test.espresso:espresso-intents:3.7.0
-    androidTestImplementation("org.hamcrest:hamcrest:2.2")
 
     debugImplementation("androidx.fragment:fragment-testing:1.8.8")
 }

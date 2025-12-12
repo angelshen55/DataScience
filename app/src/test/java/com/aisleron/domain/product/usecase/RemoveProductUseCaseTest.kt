@@ -23,7 +23,7 @@ import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -47,15 +47,15 @@ class RemoveProductUseCaseTest {
     fun removeProduct_IsExistingProduct_ProductRemoved() {
         val countBefore: Int
         val countAfter: Int
-        val removedProduct: Product?
+        val activeProductsAfter: List<Product>
         runBlocking {
             val productRepository = testData.getRepository<ProductRepository>()
             countBefore = productRepository.getAll().count()
             removeProductUseCase(existingProduct.id)
-            removedProduct = productRepository.get(existingProduct.id)
-            countAfter = productRepository.getAll().count()
+            activeProductsAfter = productRepository.getAll()
+            countAfter = activeProductsAfter.count()
         }
-        assertNull(removedProduct)
+        assertFalse(activeProductsAfter.any { it.id == existingProduct.id })
         assertEquals(countBefore - 1, countAfter)
     }
 

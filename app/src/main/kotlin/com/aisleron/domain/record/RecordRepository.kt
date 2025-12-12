@@ -18,8 +18,20 @@
 package com.aisleron.domain.record
 
 import com.aisleron.domain.base.BaseRepository
+import java.util.Date
+
+// Data class for product purchase counts
+data class ProductPurchaseCount(
+    val productId: Int,
+    val productName: String,
+    val purchaseCount: Int
+)
 
 interface RecordRepository : BaseRepository<Record> {
     suspend fun getRecordsByProduct(productId: Int): List<Record>
     suspend fun getRecordsByDateRange(startDate: Long, endDate: Long): List<Record>
+    
+    // New methods for recommendation feature
+    suspend fun getProductPurchaseCounts(): List<ProductPurchaseCount>
+    suspend fun getPurchaseDatesForProduct(productId: Int): List<Date>
 }

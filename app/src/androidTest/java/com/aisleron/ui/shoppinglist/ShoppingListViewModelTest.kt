@@ -45,7 +45,9 @@ import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.product.usecase.RemoveProductUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCase
+import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
+import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCase
 import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
 import kotlinx.coroutines.flow.first
@@ -171,6 +173,7 @@ class ShoppingListViewModelTest : KoinTest {
             name = existingProduct.name,
             inStock = existingProduct.inStock,
             qtyNeeded = existingProduct.qtyNeeded,
+            price = existingProduct.price,
             aisleId = existingAisle.id,
             aisleProductId = aisleProduct.id,
             updateAisleProductRankUseCase = get<UpdateAisleProductRankUseCase>(),
@@ -406,7 +409,8 @@ class ShoppingListViewModelTest : KoinTest {
             get<UpdateAisleExpandedUseCase>(),
             get<SortLocationByNameUseCase>(),
             get<GetLoyaltyCardForLocationUseCase>(),
-            get<UpdateProductQtyNeededUseCase>()
+            get<UpdateProductQtyNeededUseCase>(),
+            get<UpdateProductPriceUseCase>()
         )
 
         Assert.assertNotNull(vm)
@@ -720,6 +724,7 @@ class ShoppingListViewModelTest : KoinTest {
             name = existingProduct.name,
             inStock = existingProduct.inStock,
             qtyNeeded = existingProduct.qtyNeeded,
+            price = existingProduct.price,
             aisleId = existingAisle.id,
             aisleProductId = aisleProduct.id,
             updateAisleProductRankUseCase = get<UpdateAisleProductRankUseCase>(),

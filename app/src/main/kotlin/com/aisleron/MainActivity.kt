@@ -127,6 +127,9 @@ class MainActivity : AppCompatActivity() {
 
             drawerLayout.closeDrawers()
             FabHandlerImpl().setFabItems(this)
+            
+            // Invalidate menu when switching destinations to ensure proper cleanup
+            invalidateOptionsMenu()
         }
 
         if (!WelcomePreferencesImpl().isInitialized(this)) {

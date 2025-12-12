@@ -76,7 +76,7 @@ class ProductRepositoryImplTest : KoinTest {
 
     @Test
     fun getByName_ValidNameProvided_ReturnProduct() = runTest {
-        val productName = get<ProductDao>().getProducts().first().name
+        val productName = get<ProductDao>().getActiveProducts().first().name
 
         val product = productRepositoryImpl.getByName(productName)
 
@@ -94,7 +94,7 @@ class ProductRepositoryImplTest : KoinTest {
 
     @Test
     fun get_ValidIdProvided_ReturnProduct() = runTest {
-        val productId = get<ProductDao>().getProducts().first().id
+        val productId = get<ProductDao>().getActiveProducts().first().id
 
         val product = productRepositoryImpl.get(productId)
 
@@ -112,7 +112,7 @@ class ProductRepositoryImplTest : KoinTest {
 
     @Test
     fun getAll_AllProductsReturned() = runTest {
-        val allCount = get<ProductDao>().getProducts().count()
+        val allCount = get<ProductDao>().getActiveProducts().count()
 
         val allProducts = productRepositoryImpl.getAll()
 
@@ -130,9 +130,9 @@ class ProductRepositoryImplTest : KoinTest {
             qtyNeeded = 0
         )
 
-        val productCountBefore = productDao.getProducts().firstOrNull { it.name == product.name }
+        val productCountBefore = productDao.getActiveProducts().firstOrNull { it.name == product.name }
         val newProductId = productRepositoryImpl.add(product)
-        val productAfter = productDao.getProducts().firstOrNull { it.name == product.name }
+        val productAfter = productDao.getActiveProducts().firstOrNull { it.name == product.name }
 
         assertNull(productCountBefore)
         assertNotNull(productAfter)
@@ -142,7 +142,7 @@ class ProductRepositoryImplTest : KoinTest {
     @Test
     fun add_MultipleProductsProvided_ProductsAdded() = runTest {
         val productDao = get<ProductDao>()
-        val productCountBefore = productDao.getProducts().count()
+        val productCountBefore = productDao.getActiveProducts().count()
 
         val newProducts = listOf(
             Product(
@@ -161,7 +161,7 @@ class ProductRepositoryImplTest : KoinTest {
 
         val newProductIds = productRepositoryImpl.add(newProducts)
 
-        val productCountAfter = productDao.getProducts().count()
+        val productCountAfter = productDao.getActiveProducts().count()
         val newProductOne = productDao.getProduct(newProductIds.first())
         val newProductTwo = productDao.getProduct(newProductIds.last())
 
@@ -174,7 +174,7 @@ class ProductRepositoryImplTest : KoinTest {
     @Test
     fun update_SingleProductProvided_ProductUpdated() = runTest {
         val productDao = get<ProductDao>()
-        val productBefore = productDao.getProducts().first()
+        val productBefore = productDao.getActiveProducts().first()
         val product = Product(
             id = productBefore.id,
             name = "${productBefore.name} Updated",
@@ -182,9 +182,9 @@ class ProductRepositoryImplTest : KoinTest {
             qtyNeeded = productBefore.qtyNeeded
         )
 
-        val productCountBefore = productDao.getProducts().count()
+        val productCountBefore = productDao.getActiveProducts().count()
         productRepositoryImpl.update(product)
-        val productCountAfter = productDao.getProducts().count()
+        val productCountAfter = productDao.getActiveProducts().count()
 
         val productAfter = productDao.getProduct(productBefore.id)
 
@@ -195,9 +195,9 @@ class ProductRepositoryImplTest : KoinTest {
     @Test
     fun update_MultipleProductsProvided_ProductsUpdated() = runTest {
         val productDao = get<ProductDao>()
-        val productCountBefore = productDao.getProducts().count()
-        val productOneBefore = productDao.getProducts().first()
-        val productTwoBefore = productDao.getProducts().last()
+        val productCountBefore = productDao.getActiveProducts().count()
+        val productOneBefore = productDao.getActiveProducts().first()
+        val productTwoBefore = productDao.getActiveProducts().last()
 
         val products = listOf(
             Product(
@@ -216,7 +216,7 @@ class ProductRepositoryImplTest : KoinTest {
 
         productRepositoryImpl.update(products)
 
-        val productCountAfter = productDao.getProducts().count()
+        val productCountAfter = productDao.getActiveProducts().count()
         val productOneAfter = productDao.getProduct(productOneBefore.id)
         val productTwoAfter = productDao.getProduct(productTwoBefore.id)
 
@@ -228,7 +228,7 @@ class ProductRepositoryImplTest : KoinTest {
     @Test
     fun remove_ValidProductProvided_ProductRemoved() = runTest {
         val productDao = get<ProductDao>()
-        val productBefore = productDao.getProducts().first()
+        val productBefore = productDao.getActiveProducts().first()
         val product = Product(
             id = productBefore.id,
             name = productBefore.name,
@@ -236,9 +236,9 @@ class ProductRepositoryImplTest : KoinTest {
             qtyNeeded = productBefore.qtyNeeded
         )
 
-        val productCountBefore = productDao.getProducts().count()
+        val productCountBefore = productDao.getActiveProducts().count()
         productRepositoryImpl.remove(product)
-        val productCountAfter = productDao.getProducts().count()
+        val productCountAfter = productDao.getActiveProducts().count()
         val productAfter = productDao.getProduct(productBefore.id)
 
         assertEquals(productCountBefore - 1, productCountAfter)
@@ -255,16 +255,16 @@ class ProductRepositoryImplTest : KoinTest {
             qtyNeeded = 0
         )
 
-        val productCountBefore = productDao.getProducts().count()
+        val productCountBefore = productDao.getActiveProducts().count()
         productRepositoryImpl.remove(product)
-        val productCountAfter = productDao.getProducts().count()
+        val productCountAfter = productDao.getActiveProducts().count()
 
         assertEquals(productCountBefore, productCountAfter)
     }
 
     @Test
     fun remove_ValidProductProvided_AisleProductEntriesRemoved() = runTest {
-        val productBefore = get<ProductDao>().getProducts().first()
+        val productBefore = get<ProductDao>().getActiveProducts().first()
         val product = Product(
             id = productBefore.id,
             name = productBefore.name,
