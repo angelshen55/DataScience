@@ -274,8 +274,8 @@ class ShoppingListViewModel(
                     _loyaltyCard = getLoyaltyCardForLocationUseCase(it.id)
                 }
 
-                // Check if we should show recommendations (only for NEEDED filter)
-                if (filterType == FilterType.NEEDED && _context != null) {
+                // Check if we should show recommendations (only for ALL filter)
+                if (filterType == FilterType.ALL && _context != null) {
                     val preferences = com.aisleron.ui.settings.ShoppingListPreferencesImpl()
                     // Show recommendations if we haven't shown them today
                     if (preferences.shouldShowRecommendationsToday(_context!!)) {
