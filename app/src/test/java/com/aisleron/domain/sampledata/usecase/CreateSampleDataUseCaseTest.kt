@@ -67,9 +67,11 @@ class CreateSampleDataUseCaseTest {
 
         val addProductUseCase = AddProductUseCaseImpl(
             productRepository,
+            testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
             GetDefaultAislesUseCase(aisleRepository),
             addAisleProductsUseCase,
             IsProductNameUniqueUseCase(productRepository),
+            com.aisleron.domain.product.usecase.IsPricePositiveUseCase(),
             GetAisleMaxRankUseCase(aisleProductRepository)
         )
 
@@ -177,9 +179,11 @@ class CreateSampleDataUseCaseTest {
             val aisleProductRepository = testData.getRepository<AisleProductRepository>()
             val addProductUseCase = AddProductUseCaseImpl(
                 productRepository,
+                testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
                 GetDefaultAislesUseCase(testData.getRepository<AisleRepository>()),
                 AddAisleProductsUseCase(aisleProductRepository),
                 IsProductNameUniqueUseCase(productRepository),
+                com.aisleron.domain.product.usecase.IsPricePositiveUseCase(),
                 GetAisleMaxRankUseCase(aisleProductRepository)
             )
 

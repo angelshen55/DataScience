@@ -38,7 +38,11 @@ class UpdateProductQtyNeededUseCaseImplTest {
         val productRepository = testData.getRepository<ProductRepository>()
         updateProductQtyNeededUseCase = UpdateProductQtyNeededUseCaseImpl(
             GetProductUseCase(productRepository),
-            UpdateProductUseCase(productRepository, IsProductNameUniqueUseCase(productRepository))
+            UpdateProductUseCase(
+                productRepository,
+                testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
+                IsProductNameUniqueUseCase(productRepository)
+            )
         )
     }
 

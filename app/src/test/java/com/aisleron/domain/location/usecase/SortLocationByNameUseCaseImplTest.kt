@@ -82,9 +82,11 @@ class SortLocationByNameUseCaseImplTest {
         val locationId = locationRepository.getShops().first().first().id
         val addProductUseCase = AddProductUseCaseImpl(
             testData.getRepository<ProductRepository>(),
+            testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
             GetDefaultAislesUseCase(testData.getRepository<AisleRepository>()),
             AddAisleProductsUseCase(testData.getRepository<AisleProductRepository>()),
             IsProductNameUniqueUseCase(testData.getRepository<ProductRepository>()),
+            com.aisleron.domain.product.usecase.IsPricePositiveUseCase(),
             GetAisleMaxRankUseCase(testData.getRepository<AisleProductRepository>())
         )
 
@@ -92,7 +94,8 @@ class SortLocationByNameUseCaseImplTest {
             id = 0,
             name = "ZZZ",
             inStock = false,
-            qtyNeeded = 0
+            qtyNeeded = 0,
+            price = 0.0
         )
 
         val aisle = locationRepository.getLocationWithAisles(locationId).aisles.first()
