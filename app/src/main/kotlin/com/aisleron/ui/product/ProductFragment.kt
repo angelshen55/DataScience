@@ -64,10 +64,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import com.aisleron.data.api.ModelApiService
+import com.aisleron.data.api.GenerateRequest
 
 class ProductFragment(
     private val addEditFragmentListener: AddEditFragmentListener,
@@ -99,6 +100,9 @@ class ProductFragment(
     private val purchaseSetRepository: com.aisleron.domain.product.PurchaseSetRepository by inject()
     private val modelTrainingDataUploader: com.aisleron.domain.product.ModelTrainingDataUploader by inject()
     private val recordRepository: com.aisleron.domain.record.RecordRepository by inject()
+    
+    // Inject API service for model communication
+    private val modelApiService: ModelApiService by inject()
     
     // Inject use cases for adding products to needed list
     private val productRepository: ProductRepository by inject()
@@ -234,90 +238,154 @@ class ProductFragment(
         val addEditProductBundle = Bundler().getAddEditProductBundle(arguments)
         val locationId = addEditProductBundle.locationId
         
-        // Hardcoded products for now: Egg, Tomato, Salt
-        val recommendedProductNames = listOf("Egg", "Tomato", "Salt")
-        val totalRecommended = recommendedProductNames.size
+        // Get current product name from ViewModel
+        val currentProductName = productViewModel.uiData.value.productName
         
-        // Start tracking dialog
-        recommendationTracker.onDialogShown(totalRecommended)
-        
-        // Get products by name and check if they're in needed list
-        viewLifecycleOwner.lifecycleScope.launch {
-            val recommendedProductsWithStatus = recommendedProductNames.map { name ->
-                val product = productRepository.getByName(name) ?: Product(
-                    id = 0, // Product doesn't exist
-                    name = name,
-                    inStock = false,
-                    qtyNeeded = 0,
-                    price = 0.0
-                )
-                
-                // Check if product is already in needed list
-                val isInNeededList = if (product.id > 0 && locationId != null) {
-                    isProductInNeededList(product.id, locationId)
-                } else {
-                    false
-                }
-                
-                ProductWithStatus(product, isInNeededList)
+        // Show loading state
+        val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_recommendations)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        val loadingAdapter = RecommendationProductAdapter(
+            emptyList(),
+            emptyList(),
+            object : RecommendationProductAdapter.RecommendationProductListener {
+                override fun onAddToListClicked(product: Product) {}
             }
-            
-            // Set up RecyclerView
-            val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_recommendations)
-            recyclerView.layoutManager = LinearLayoutManager(requireContext())
-            recyclerView.adapter = RecommendationProductAdapter(
-                recommendedProductsWithStatus.map { it.product },
-                recommendedProductsWithStatus.map { it.isInNeededList },
-                object : RecommendationProductAdapter.RecommendationProductListener {
-                    override fun onAddToListClicked(product: Product) {
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            addProductToNeededList(product, locationId)
-                            // Track product addition
-                            recommendationTracker.onProductAdded()
-                            // Show feedback that product was added
-                            Snackbar.make(
-                                view,
-                                "${product.name} added to needed list",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                            // Refresh the adapter to update button states
-                            val updatedProductsWithStatus = recommendedProductNames.map { name ->
-                                val p = productRepository.getByName(name) ?: Product(
-                                    id = 0,
-                                    name = name,
-                                    inStock = false,
-                                    qtyNeeded = 0,
-                                    price = 0.0
-                                )
-                                val isInNeededList = if (p.id > 0 && locationId != null) {
-                                    isProductInNeededList(p.id, locationId)
-                                } else {
-                                    false
-                                }
-                                ProductWithStatus(p, isInNeededList)
-                            }
-                            (recyclerView.adapter as? RecommendationProductAdapter)?.updateProducts(
-                                updatedProductsWithStatus.map { it.product },
-                                updatedProductsWithStatus.map { it.isInNeededList }
-                            )
-                        }
-                    }
-                }
+        )
+        recyclerView.adapter = loadingAdapter
+        
+        // Set up "Stop Recommendation Today" button
+        val stopButton = view.findViewById<android.widget.Button>(R.id.btn_stop_recommendation_today)
+        stopButton.setOnClickListener {
+            val preferences = ShoppingListPreferencesImpl()
+            preferences.setLastRecommendationDisplayDate(
+                requireContext(),
+                System.currentTimeMillis()
             )
-            
-            // Set up "Stop Recommendation Today" button
-            val stopButton = view.findViewById<android.widget.Button>(R.id.btn_stop_recommendation_today)
-            stopButton.setOnClickListener {
-                val preferences = ShoppingListPreferencesImpl()
-                preferences.setLastRecommendationDisplayDate(
-                    requireContext(),
-                    System.currentTimeMillis()
-                )
-                bottomSheetDialog.dismiss()
-            }
+            bottomSheetDialog.dismiss()
         }
         
         bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.show()
+        
+        // Call model API to get recommendations
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // Build prompt for model
+                val prompt = if (currentProductName.isNotBlank()) {
+                    "顾客已购买「$currentProductName」，请推测该顾客还可能一起购买的其他商品名称。"
+                } else {
+                    "请推荐一些常见的购物商品。"
+                }
+                
+                android.util.Log.i("ProductFragment", "Calling model API with prompt: $prompt")
+                
+                // Call model API
+                val request = GenerateRequest(
+                    prompt = prompt,
+                    max_new_tokens = 128
+                )
+                val response = modelApiService.generateRecommendations(request)
+                
+                if (response.isSuccessful && response.body() != null) {
+                    val prediction = response.body()!!.prediction
+                    android.util.Log.i("ProductFragment", "Raw model prediction: $prediction")
+                    android.util.Log.i("ProductFragment", "Prediction length: ${prediction.length}")
+                    
+                    // Parse prediction to extract product names
+                    val recommendedProductNames = parseProductNamesFromPrediction(prediction)
+                    android.util.Log.i("ProductFragment", "Parsed ${recommendedProductNames.size} product names: $recommendedProductNames")
+                    
+                    if (recommendedProductNames.isEmpty()) {
+                        android.util.Log.w("ProductFragment", "Warning: No products parsed from prediction. Raw prediction was: $prediction")
+                    }
+                    
+                    val totalRecommended = recommendedProductNames.size
+                    
+                    // Start tracking dialog
+                    recommendationTracker.onDialogShown(totalRecommended)
+                    
+                    // Get products by name and check if they're in needed list
+                    val recommendedProductsWithStatus = recommendedProductNames.map { name ->
+                        val product = productRepository.getByName(name.trim()) ?: Product(
+                            id = 0, // Product doesn't exist
+                            name = name.trim(),
+                            inStock = false,
+                            qtyNeeded = 0,
+                            price = 0.0
+                        )
+                        
+                        // Check if product is already in needed list
+                        val isInNeededList = if (product.id > 0 && locationId != null) {
+                            isProductInNeededList(product.id, locationId)
+                        } else {
+                            false
+                        }
+                        
+                        ProductWithStatus(product, isInNeededList)
+                    }
+                    
+                    // Update RecyclerView with recommendations
+                    recyclerView.adapter = RecommendationProductAdapter(
+                        recommendedProductsWithStatus.map { it.product },
+                        recommendedProductsWithStatus.map { it.isInNeededList },
+                        object : RecommendationProductAdapter.RecommendationProductListener {
+                            override fun onAddToListClicked(product: Product) {
+                                viewLifecycleOwner.lifecycleScope.launch {
+                                    addProductToNeededList(product, locationId)
+                                    // Track product addition
+                                    recommendationTracker.onProductAdded()
+                                    // Show feedback that product was added
+                                    Snackbar.make(
+                                        view,
+                                        "${product.name} added to needed list",
+                                        Snackbar.LENGTH_SHORT
+                                    ).show()
+                                    // Refresh the adapter to update button states
+                                    val updatedProductsWithStatus = recommendedProductNames.map { name ->
+                                        val p = productRepository.getByName(name.trim()) ?: Product(
+                                            id = 0,
+                                            name = name.trim(),
+                                            inStock = false,
+                                            qtyNeeded = 0,
+                                            price = 0.0
+                                        )
+                                        val isInNeededList = if (p.id > 0 && locationId != null) {
+                                            isProductInNeededList(p.id, locationId)
+                                        } else {
+                                            false
+                                        }
+                                        ProductWithStatus(p, isInNeededList)
+                                    }
+                                    (recyclerView.adapter as? RecommendationProductAdapter)?.updateProducts(
+                                        updatedProductsWithStatus.map { it.product },
+                                        updatedProductsWithStatus.map { it.isInNeededList }
+                                    )
+                                }
+                            }
+                        }
+                    )
+                } else {
+                    android.util.Log.e("ProductFragment", "Model API call failed: ${response.code()} - ${response.message()}")
+                    // Fallback to empty list or show error
+                    recommendationTracker.onDialogShown(0)
+                    Snackbar.make(
+                        view,
+                        "Failed to get recommendations from model",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProductFragment", "Error calling model API", e)
+                // Fallback to empty list or show error
+                recommendationTracker.onDialogShown(0)
+                Snackbar.make(
+                    view,
+                    "Error: ${e.message}",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
+        }
+        
         bottomSheetDialog.setOnDismissListener {
             // Track dialog dismissal and log metrics
             recommendationTracker.onDialogDismissed()
@@ -340,6 +408,63 @@ class ProductFragment(
         }
         
         bottomSheetDialog.show()
+    }
+    
+    /**
+     * Parse product names from model prediction
+     * Handles various formats:
+     * - Comma-separated: "Egg, Tomato, Salt"
+     * - With quotes: "Egg", "Tomato", "Salt"
+     * - List format: ["Egg", "Tomato", "Salt"]
+     * - Chinese comma: "Egg，Tomato，Salt"
+     * - Mixed formats
+     */
+    private fun parseProductNamesFromPrediction(prediction: String): List<String> {
+        if (prediction.isBlank()) {
+            return emptyList()
+        }
+        
+        var cleaned = prediction.trim()
+        
+        // Remove JSON array brackets if present: ["Egg", "Tomato"] -> "Egg", "Tomato"
+        if (cleaned.startsWith("[") && cleaned.endsWith("]")) {
+            cleaned = cleaned.removePrefix("[").removeSuffix("]").trim()
+        }
+        
+        // Remove curly braces if present: {"Egg", "Tomato"} -> "Egg", "Tomato"
+        if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
+            cleaned = cleaned.removePrefix("{").removeSuffix("}").trim()
+        }
+        
+        // Split by comma (both English and Chinese comma)
+        val products = mutableListOf<String>()
+        
+        // Try to split by comma (handle both English and Chinese comma)
+        val parts = cleaned.split(Regex("[,，]"))
+        
+        for (part in parts) {
+            var productName = part.trim()
+            
+            // Remove quotes if present (both single and double quotes)
+            productName = productName.removeSurrounding("\"").removeSurrounding("'").trim()
+            
+            // Remove any leading/trailing punctuation
+            productName = productName.trim().removePrefix("「").removeSuffix("」")
+            productName = productName.trim().removePrefix("《").removeSuffix("》")
+            productName = productName.trim().removePrefix("(").removeSuffix(")")
+            productName = productName.trim().removePrefix("[").removeSuffix("]")
+            
+            // Only add non-empty product names
+            if (productName.isNotBlank()) {
+                products.add(productName)
+            }
+        }
+        
+        // Remove duplicates while preserving order
+        val uniqueProducts = products.distinct()
+        
+        // Limit to 10 recommendations
+        return uniqueProducts.take(10)
     }
     
     // Data class to hold product with its status

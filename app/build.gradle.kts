@@ -190,6 +190,13 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     
+    // Network libraries for API calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+    
     // Firebase Analytics (uncomment when Firebase is configured)
     // implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     // implementation("com.google.firebase:firebase-analytics-ktx")

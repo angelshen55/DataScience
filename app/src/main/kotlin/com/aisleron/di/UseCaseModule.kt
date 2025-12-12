@@ -89,6 +89,7 @@ import com.aisleron.domain.product.PurchaseSetRepository
 import com.aisleron.domain.product.ModelTrainingDataUploader
 import com.aisleron.domain.product.ModelTrainingDataUploaderImpl
 import com.aisleron.domain.record.RecordRepository
+import com.aisleron.data.api.ModelApiService
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCase
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCaseImpl
 import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
@@ -345,6 +346,10 @@ val useCaseModule = module {
      * Model Training Data Uploader
      */
     factory<ModelTrainingDataUploader> {
-        ModelTrainingDataUploaderImpl(productRepository = get())
+        ModelTrainingDataUploaderImpl(
+            productRepository = get(),
+            apiService = get(),
+            context = androidApplication()
+        )
     }
 }

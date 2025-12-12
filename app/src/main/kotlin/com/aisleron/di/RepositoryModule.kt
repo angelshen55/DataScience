@@ -37,6 +37,8 @@ import com.aisleron.data.product.PurchaseSetRepositoryImpl
 import com.aisleron.domain.record.RecordRepository
 import com.aisleron.data.record.RecordMapper
 import com.aisleron.data.record.RecordRepositoryImpl
+import com.aisleron.data.api.ModelApiClient
+import com.aisleron.data.api.ModelApiService
 import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
@@ -79,5 +81,10 @@ val repositoryModule = module {
 
     factory<PurchaseSetRepository> {
         PurchaseSetRepositoryImpl(context = androidApplication())
+    }
+    
+    // API Service for model communication
+    single<ModelApiService> {
+        ModelApiClient.create()
     }
 }
