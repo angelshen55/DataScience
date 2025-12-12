@@ -71,6 +71,7 @@ import com.aisleron.domain.product.usecase.AddProductUseCaseImpl
 import com.aisleron.domain.product.usecase.CopyProductUseCase
 import com.aisleron.domain.product.usecase.CopyProductUseCaseImpl
 import com.aisleron.domain.product.usecase.GetAllProductsUseCase
+import com.aisleron.domain.product.usecase.GetProductRecommendationsUseCase
 import com.aisleron.domain.product.usecase.GetProductUseCase
 import com.aisleron.domain.product.usecase.IsPricePositiveUseCase
 import com.aisleron.domain.product.usecase.IsProductNameUniqueUseCase
@@ -82,6 +83,7 @@ import com.aisleron.domain.product.usecase.UpdateProductPriceUseCaseImpl
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCaseImpl
 import com.aisleron.domain.product.usecase.UpdateProductUseCase
+import com.aisleron.domain.record.RecordRepository
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCase
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCaseImpl
 import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
@@ -202,6 +204,12 @@ val useCaseModule = module {
      */
     factory<GetAllProductsUseCase> { GetAllProductsUseCase(productRepository = get()) }
     factory<GetProductUseCase> { GetProductUseCase(productRepository = get()) }
+    factory<GetProductRecommendationsUseCase> { 
+        GetProductRecommendationsUseCase(
+            productRepository = get(), 
+            recordRepository = get()
+        ) 
+    }
     factory<RemoveProductUseCase> { RemoveProductUseCase(productRepository = get()) }
     factory<IsProductNameUniqueUseCase> { IsProductNameUniqueUseCase(productRepository = get()) }
     factory<IsPricePositiveUseCase> { IsPricePositiveUseCase() }

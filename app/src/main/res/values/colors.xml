@@ -30,6 +30,7 @@
     <color name="blue_400">#FF92afff</color>
     <color name="blue_500">#FFa6bcff</color>
     <color name="blue_600">#FFb9c9ff</color>
+    <color name="light_blue">#FFE3F2FD</color>
     <!-- Oranges.   -->
     <color name="orange_100">#FFff5722</color>
     <color name="orange_200">#FFff6d3b</color>

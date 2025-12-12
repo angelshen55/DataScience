@@ -25,6 +25,7 @@ import com.aisleron.di.viewModelTestModule
 import com.aisleron.domain.aisle.Aisle
 import com.aisleron.domain.aisle.AisleRepository
 import com.aisleron.domain.aisle.usecase.GetAisleUseCase
+import com.aisleron.domain.aisle.usecase.GetDefaultAisleForLocationUseCase
 import com.aisleron.domain.aisleproduct.AisleProductRepository
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.product.Product
@@ -200,7 +201,8 @@ class ProductViewModelTest(private val inStock: Boolean) : KoinTest {
             get<AddProductUseCase>(),
             get<UpdateProductUseCase>(),
             get<GetProductUseCase>(),
-            get<GetAisleUseCase>()
+            get<GetAisleUseCase>(),
+            get<GetDefaultAisleForLocationUseCase>()
         )
 
         Assert.assertNotNull(pvm)

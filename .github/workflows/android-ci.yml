@@ -2,7 +2,7 @@ name: Android CI (Debug)
 
 on:
   push:
-    branches: [ "main", "angelshen55-patch-1"]
+    branches: [ "main", "workflowUpdate"]
   pull_request:
   workflow_dispatch:
 
@@ -57,22 +57,21 @@ jobs:
       - name: Start emulator and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-             api-level: 29  # 使用 API 29 而不是 30，启动更快更稳定
-             target: google_apis
-             arch: x86_64
-             force-avd-creation: true
-             emulator-boot-timeout: 600
-             emulator-options: -no-window -no-audio -no-snapshot -gpu swiftshader_indirect
-             script: ./gradlew :app:connectedDebugAndroidTest
-
+          api-level: 29  # 使用 API 29 而不是 30，启动更快更稳定
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -no-audio -no-snapshot -gpu swiftshader_indirect
+          script: ./gradlew :app:connectedDebugAndroidTest
 
       - name: Build Debug APK
         run: ./gradlew :app:assembleDebug
 
-      - name: Upload assets to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload instrumentation test results
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.ref_name}}
-          files: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/mapping/release/mapping.txt
+          name: instrumentation-test-results
+          path: app/build/outputs/androidTest-results/connected
+
+      

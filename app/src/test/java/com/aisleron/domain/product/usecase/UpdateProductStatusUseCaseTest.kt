@@ -18,6 +18,17 @@
 package com.aisleron.domain.product.usecase
 
 import com.aisleron.data.TestDataManager
+import com.aisleron.domain.aisle.AisleRepository
+import com.aisleron.domain.aisle.usecase.AddAisleUseCaseImpl
+import com.aisleron.domain.aisle.usecase.GetAisleUseCaseImpl
+import com.aisleron.domain.aisle.usecase.GetDefaultAislesUseCase
+import com.aisleron.domain.aisle.usecase.IsAisleNameUniqueUseCase
+import com.aisleron.domain.aisleproduct.AisleProductRepository
+import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
+import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
+import com.aisleron.domain.location.LocationRepository
+import com.aisleron.domain.location.usecase.GetHomeLocationUseCase
+import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import kotlinx.coroutines.runBlocking
@@ -40,13 +51,33 @@ class UpdateProductStatusUseCaseTest {
     fun setUp() {
         testData = TestDataManager()
         val productRepository = testData.getRepository<ProductRepository>()
+        val aisleRepository = testData.getRepository<AisleRepository>()
+        val locationRepository = testData.getRepository<LocationRepository>()
+        val aisleProductRepository = testData.getRepository<AisleProductRepository>()
+        val getLocationUseCase = GetLocationUseCase(locationRepository)
+        val addAisleUseCase = AddAisleUseCaseImpl(
+            aisleRepository,
+            getLocationUseCase,
+            IsAisleNameUniqueUseCase(aisleRepository)
+        )
+        val addAisleProductsUseCase = AddAisleProductsUseCase(aisleProductRepository)
         updateProductStatusUseCase = UpdateProductStatusUseCaseImpl(
             GetProductUseCase(productRepository),
             UpdateProductUseCase(
                 productRepository,
                 testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
-                IsProductNameUniqueUseCase(productRepository)
-            )
+                IsProductNameUniqueUseCase(productRepository),
+                GetDefaultAislesUseCase(aisleRepository),
+                getLocationUseCase
+            ),
+            GetHomeLocationUseCase(locationRepository),
+            GetAisleUseCaseImpl(aisleRepository),
+            getLocationUseCase,
+            aisleRepository,
+            addAisleUseCase,
+            aisleProductRepository,
+            addAisleProductsUseCase,
+            GetAisleMaxRankUseCase(aisleProductRepository)
         )
     }
 
