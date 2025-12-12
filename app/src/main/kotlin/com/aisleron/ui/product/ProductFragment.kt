@@ -114,6 +114,7 @@ class ProductFragment(
     private val aisleProductRepository: AisleProductRepository by inject()
     private val addAisleProductsUseCase: AddAisleProductsUseCase by inject()
     private val getAisleMaxRankUseCase: GetAisleMaxRankUseCase by inject()
+    private val getHomeLocationUseCase: com.aisleron.domain.location.usecase.GetHomeLocationUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -228,12 +229,6 @@ class ProductFragment(
     }
 
     private fun showRecommendationBottomSheet() {
-        val bottomSheetDialog = BottomSheetDialog(requireContext())
-        val view = LayoutInflater.from(requireContext()).inflate(
-            R.layout.dialog_recommendation_bottom_sheet,
-            null
-        )
-        
         // Get the location ID from the bundle
         val addEditProductBundle = Bundler().getAddEditProductBundle(arguments)
         val locationId = addEditProductBundle.locationId
@@ -241,33 +236,7 @@ class ProductFragment(
         // Get current product name from ViewModel
         val currentProductName = productViewModel.uiData.value.productName
         
-        // Show loading state
-        val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_recommendations)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        val loadingAdapter = RecommendationProductAdapter(
-            emptyList(),
-            emptyList(),
-            object : RecommendationProductAdapter.RecommendationProductListener {
-                override fun onAddToListClicked(product: Product) {}
-            }
-        )
-        recyclerView.adapter = loadingAdapter
-        
-        // Set up "Stop Recommendation Today" button
-        val stopButton = view.findViewById<android.widget.Button>(R.id.btn_stop_recommendation_today)
-        stopButton.setOnClickListener {
-            val preferences = ShoppingListPreferencesImpl()
-            preferences.setLastRecommendationDisplayDate(
-                requireContext(),
-                System.currentTimeMillis()
-            )
-            bottomSheetDialog.dismiss()
-        }
-        
-        bottomSheetDialog.setContentView(view)
-        bottomSheetDialog.show()
-        
-        // Call model API to get recommendations
+        // Call model API to get recommendations first, then decide whether to show dialog
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 // Build prompt for model
@@ -299,13 +268,62 @@ class ProductFragment(
                         android.util.Log.w("ProductFragment", "Warning: No products parsed from prediction. Raw prediction was: $prediction")
                     }
                     
-                    val totalRecommended = recommendedProductNames.size
+                    // Get home location for checking stock
+                    val homeLocation = getHomeLocationUseCase()
+                    val homeLocationId = homeLocation?.id
+                    
+                    // Filter out products that are already in needed list or stock
+                    val filteredProductNames = recommendedProductNames.filter { name ->
+                        val product = productRepository.getByName(name.trim())
+                        if (product != null && product.id > 0) {
+                            // Check if product is in needed list (inStock = false) in current location
+                            val inNeededList = locationId != null && isProductInNeededList(product.id, locationId)
+                            
+                            // Check if product is in stock (inStock = true) in home location
+                            val inStock = homeLocationId != null && isProductInStock(product.id, homeLocationId)
+                            
+                            // Filter out if in needed list or stock
+                            val shouldFilter = inNeededList || inStock
+                            
+                            if (shouldFilter) {
+                                android.util.Log.d("ProductFragment", "Filtering out ${product.name}: inNeededList=$inNeededList, inStock=$inStock")
+                            }
+                            
+                            !shouldFilter
+                        } else {
+                            // Product doesn't exist yet, include it
+                            true
+                        }
+                    }
+                    
+                    android.util.Log.i("ProductFragment", "After filtering: ${filteredProductNames.size} products (filtered out ${recommendedProductNames.size - filteredProductNames.size})")
+                    
+                    // If no products remain after filtering, don't show the dialog
+                    if (filteredProductNames.isEmpty()) {
+                        android.util.Log.i("ProductFragment", "No products to recommend after filtering, skipping dialog")
+                        // Navigate back since there's nothing to show
+                        activity?.let {
+                            if (isAdded) {
+                                addEditFragmentListener.addEditActionCompleted(it)
+                            }
+                        }
+                        return@launch
+                    }
+                    
+                    // Only create and show dialog if we have products to recommend
+                    val bottomSheetDialog = BottomSheetDialog(requireContext())
+                    val view = LayoutInflater.from(requireContext()).inflate(
+                        R.layout.dialog_recommendation_bottom_sheet,
+                        null
+                    )
+                    
+                    val totalRecommended = filteredProductNames.size
                     
                     // Start tracking dialog
                     recommendationTracker.onDialogShown(totalRecommended)
                     
-                    // Get products by name and check if they're in needed list
-                    val recommendedProductsWithStatus = recommendedProductNames.map { name ->
+                    // Get products by name and check if they're in needed list (for button state)
+                    val recommendedProductsWithStatus = filteredProductNames.map { name ->
                         val product = productRepository.getByName(name.trim()) ?: Product(
                             id = 0, // Product doesn't exist
                             name = name.trim(),
@@ -314,7 +332,7 @@ class ProductFragment(
                             price = 0.0
                         )
                         
-                        // Check if product is already in needed list
+                        // Check if product is already in needed list (for button state)
                         val isInNeededList = if (product.id > 0 && locationId != null) {
                             isProductInNeededList(product.id, locationId)
                         } else {
@@ -324,7 +342,9 @@ class ProductFragment(
                         ProductWithStatus(product, isInNeededList)
                     }
                     
-                    // Update RecyclerView with recommendations
+                    // Set up RecyclerView
+                    val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_recommendations)
+                    recyclerView.layoutManager = LinearLayoutManager(requireContext())
                     recyclerView.adapter = RecommendationProductAdapter(
                         recommendedProductsWithStatus.map { it.product },
                         recommendedProductsWithStatus.map { it.isInNeededList },
@@ -341,7 +361,7 @@ class ProductFragment(
                                         Snackbar.LENGTH_SHORT
                                     ).show()
                                     // Refresh the adapter to update button states
-                                    val updatedProductsWithStatus = recommendedProductNames.map { name ->
+                                    val updatedProductsWithStatus = filteredProductNames.map { name ->
                                         val p = productRepository.getByName(name.trim()) ?: Product(
                                             id = 0,
                                             name = name.trim(),
@@ -364,50 +384,68 @@ class ProductFragment(
                             }
                         }
                     )
+                    
+                    // Set up "Stop Recommendation Today" button
+                    val stopButton = view.findViewById<android.widget.Button>(R.id.btn_stop_recommendation_today)
+                    stopButton.setOnClickListener {
+                        val preferences = ShoppingListPreferencesImpl()
+                        preferences.setLastRecommendationDisplayDate(
+                            requireContext(),
+                            System.currentTimeMillis()
+                        )
+                        bottomSheetDialog.dismiss()
+                    }
+                    
+                    bottomSheetDialog.setContentView(view)
+                    
+                    // Set up dismiss listener
+                    bottomSheetDialog.setOnDismissListener {
+                        // Track dialog dismissal and log metrics
+                        recommendationTracker.onDialogDismissed()
+                        
+                        // If retraining is needed, collect purchase sets for model training
+                        val shouldRetrain = recommendationTracker.getLastRetrainDecision()
+                        if (shouldRetrain) {
+                            // Use independent background scope to avoid cancellation when Fragment is destroyed
+                            backgroundScope.launch {
+                                try {
+                                    handleRetrainNeeded()
+                                } catch (e: Exception) {
+                                    android.util.Log.e("ProductFragment", "Error in handleRetrainNeeded", e)
+                                }
+                            }
+                        }
+                        
+                        // Navigate back after dialog is dismissed
+                        // Check if Fragment is still attached to avoid IllegalStateException
+                        activity?.let {
+                            if (isAdded) {
+                                addEditFragmentListener.addEditActionCompleted(it)
+                            }
+                        }
+                    }
+                    
+                    // Show the dialog
+                    bottomSheetDialog.show()
                 } else {
                     android.util.Log.e("ProductFragment", "Model API call failed: ${response.code()} - ${response.message()}")
-                    // Fallback to empty list or show error
-                    recommendationTracker.onDialogShown(0)
-                    Snackbar.make(
-                        view,
-                        "Failed to get recommendations from model",
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                    // API call failed, just navigate back
+                    activity?.let {
+                        if (isAdded) {
+                            addEditFragmentListener.addEditActionCompleted(it)
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ProductFragment", "Error calling model API", e)
-                // Fallback to empty list or show error
-                recommendationTracker.onDialogShown(0)
-                Snackbar.make(
-                    view,
-                    "Error: ${e.message}",
-                    Snackbar.LENGTH_SHORT
-                ).show()
-            }
-        }
-        
-        bottomSheetDialog.setOnDismissListener {
-            // Track dialog dismissal and log metrics
-            recommendationTracker.onDialogDismissed()
-            
-            // If retraining is needed, collect purchase sets for model training
-            val shouldRetrain = recommendationTracker.getLastRetrainDecision()
-            if (shouldRetrain) {
-                // Use independent background scope to avoid cancellation when Fragment is destroyed
-                backgroundScope.launch {
-                    try {
-                        handleRetrainNeeded()
-                    } catch (e: Exception) {
-                        android.util.Log.e("ProductFragment", "Error in handleRetrainNeeded", e)
+                // Error occurred, just navigate back
+                activity?.let {
+                    if (isAdded) {
+                        addEditFragmentListener.addEditActionCompleted(it)
                     }
                 }
             }
-            
-            // Navigate back after dialog is dismissed
-            addEditFragmentListener.addEditActionCompleted(requireActivity())
         }
-        
-        bottomSheetDialog.show()
     }
     
     /**
@@ -485,6 +523,21 @@ class ProductFragment(
             val aisle = getAisleUseCase(ap.aisleId)
             val product = getProductUseCase(productId)
             aisle?.locationId == locationId && product?.inStock == false
+        }
+    }
+    
+    // Check if product is already in stock (in home location with inStock = true)
+    private suspend fun isProductInStock(productId: Int, locationId: Int): Boolean {
+        if (productId == 0) return false
+        
+        // Get all aisles where this product exists
+        val productAisles = aisleProductRepository.getProductAisles(productId)
+        
+        // Check if product is in any aisle of the location and is in stock (inStock = true)
+        return productAisles.any { ap ->
+            val aisle = getAisleUseCase(ap.aisleId)
+            val product = getProductUseCase(productId)
+            aisle?.locationId == locationId && product?.inStock == true
         }
     }
     
