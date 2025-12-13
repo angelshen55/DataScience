@@ -1,0 +1,29 @@
+{
+  "Product": [
+	["Jam", "Apple"],
+	["Tuna", "Orange", "Ketchup"],
+    ["Soda", "Paper Towels", "Carrots", "Cheese", "Milk"],
+    ["Dishware", "Canned Soup"],
+    ["Toothbrush", "Honey", "Dustpan", "Syrup", "Garden Hose"],
+    ["Potatoes"],
+    ["Trash Cans"],
+    ["Paper Towels", "Tomatoes"],
+    ["Trash Cans", "Apple"],
+    ["Soda", "Milk", "Baby Wipes", "Vacuum Cleaner", "Trash Cans"],
+    ["Light Bulbs", "Trash Cans", "Power Strips", "Orange", "Chips"],
+    ["Pancake Mix", "Pasta"],
+    ["Chips", "Razors", "Tea", "Tomatoes"],
+    ["Trash Bags", "Mayonnaise", "Soda"],
+    ["Jam", "Light Bulbs", "Mayonnaise"],
+    ["Jam", "Cleaning Spray", "Cereal"],
+    ["Laundry Detergent", "Razors", "Insect Repellent", "Razors", "Shower Gel"],
+    ["Laundry Detergent", "Feminine Hygiene Products"],
+    ["Toothbrush", "Hair Gel", "Milk"],
+    ["Pickles", "Carrots", "Peanut Butter", "Sponges", "BBQ Sauce"],
+    ["Cereal"],
+    ["Trash Bags"],
+    ["Diapers", "Coffee", "Coffee", "Mop"],
+    ["Trash Cans", "Mop", "Jam"]
+
+  ]
+}

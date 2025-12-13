@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>购物搭配推荐</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 40px auto; }
+    textarea, input { width: 100%; font-size: 16px; }
+    button { margin-top: 12px; padding: 10px; font-size: 16px; }
+    pre { background: #f7f7f7; padding: 12px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>购物搭配推荐</h1>
+  <label>
+    已购买的商品：
+    <textarea id="prompt" rows="4" placeholder="顾客已购买「Pickles」，请推测该顾客还可能一起购买的其他商品名称。"></textarea>
+  </label>
+  <button id="submit">获取推荐</button>
+  <pre id="result"></pre>
+
+  <hr>
+
+  <h2>模型在线学习</h2>
+  <div>
+    <label for="retrainFile">选择训练用的JSON文件：</label>
+    <input type="file" id="retrainFile" accept=".json">
+  </div>
+  <div>
+    <label>
+      <input type="checkbox" id="retrainCheckbox" checked>
+      立即开始训练
+    </label>
+  </div>
+  <button id="retrainSubmit">提交训练数据</button>
+  <pre id="retrainResult"></pre>
+
+  <script>
+    const apiBase = "http://127.0.0.1:8000"; // 如用手机访问，换成电脑的局域网IP
+    document.getElementById("submit").addEventListener("click", async () => {
+      const prompt = document.getElementById("prompt").value.trim();
+      if (!prompt) return alert("请输入商品信息");
+      const result = document.getElementById("result");
+      result.textContent = "生成中...";
+      try {
+        const response = await fetch(`${apiBase}/v1/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, max_new_tokens: 128 })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        result.textContent = data.prediction;
+      } catch (err) {
+        result.textContent = `调用失败：${err}`;
+      }
+    });
+
+    document.getElementById("retrainSubmit").addEventListener("click", async () => {
+      const fileInput = document.getElementById("retrainFile");
+      const file = fileInput.files[0];
+      const retrain = document.getElementById("retrainCheckbox").checked;
+      const result = document.getElementById("retrainResult");
+
+      if (!file) {
+        return alert("请选择一个JSON文件");
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("retrain", String(retrain));
+
+      result.textContent = "上传和处理中...";
+      try {
+        const response = await fetch(`${apiBase}/v1/retrain`, {
+          method: "POST",
+          body: formData, // FormData sets its own Content-Type with boundary
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        result.textContent = data.message;
+      } catch (err) {
+        result.textContent = `调用失败：${err}`;
+      }
+    });
+  </script>
+</body>
+</html>
