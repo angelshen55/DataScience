@@ -84,7 +84,9 @@ class ProductFragment(
     private var appTitle: String = ""
     
     // Tracker for recommendation dialog metrics
-    private val recommendationTracker = RecommendationDialogTracker()
+    private val recommendationTracker: RecommendationDialogTracker by lazy {
+        RecommendationDialogTracker(requireContext())
+    }
     
     // Independent coroutine scope for background tasks that should not be cancelled by lifecycle
     // Use application scope to ensure it survives Fragment lifecycle

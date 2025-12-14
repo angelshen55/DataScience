@@ -17,12 +17,16 @@
 
 package com.aisleron.ui.product
 
+import android.os.Bundle
 import android.util.Log
+import com.google.firebase.analytics.FirebaseAnalytics
 
 /**
  * Tracks recommendation dialog interactions for model feedback
  */
-class RecommendationDialogTracker {
+class RecommendationDialogTracker(
+    private val context: android.content.Context
+) {
     
     private var dialogStartTime: Long = 0
     private var addedProductsCount: Int = 0
@@ -103,8 +107,8 @@ class RecommendationDialogTracker {
         // Store the decision
         lastRetrainDecision = shouldRetrain
         
-        // Send to Firebase Analytics (uncomment when Firebase is configured)
-        // sendToFirebase(dialogDuration, addedProductsCount, totalRecommendedProducts, shouldRetrain)
+        // Send to Firebase Analytics
+        sendToFirebase(dialogDuration, addedProductsCount, totalRecommendedProducts, shouldRetrain)
     }
     
     /**
@@ -117,28 +121,30 @@ class RecommendationDialogTracker {
     
     /**
      * Send metrics to Firebase Analytics
-     * Uncomment and configure when Firebase is set up
      */
-    /*
     private fun sendToFirebase(
         durationMs: Long,
         addedCount: Int,
         totalCount: Int,
         shouldRetrain: Boolean
     ) {
-        val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
-        
-        val bundle = Bundle().apply {
-            putLong("dialog_duration_ms", durationMs)
-            putInt("added_products", addedCount)
-            putInt("total_recommended", totalCount)
-            putDouble("add_rate", if (totalCount > 0) addedCount.toDouble() / totalCount else 0.0)
-            putBoolean("should_retrain", shouldRetrain)
+        try {
+            val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
+            
+            val bundle = Bundle().apply {
+                putLong("dialog_duration_ms", durationMs)
+                putInt("added_products", addedCount)
+                putInt("total_recommended", totalCount)
+                putDouble("add_rate", if (totalCount > 0) addedCount.toDouble() / totalCount else 0.0)
+                putBoolean("should_retrain", shouldRetrain)
+            }
+            
+            firebaseAnalytics.logEvent("recommendation_dialog_metrics", bundle)
+            Log.d(TAG, "Sent metrics to Firebase Analytics")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send metrics to Firebase Analytics", e)
         }
-        
-        firebaseAnalytics.logEvent("recommendation_dialog_metrics", bundle)
     }
-    */
     
     companion object {
         private const val TAG = "RecommendationTracker"

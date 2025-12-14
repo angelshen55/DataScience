@@ -24,8 +24,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.parcelize")
-    // Uncomment when Firebase is configured:
-    // id("com.google.gms.google-services")
+    id("com.google.gms.google-services")
 
     id("com.autonomousapps.dependency-analysis")
 }
@@ -142,6 +141,11 @@ android {
     //}
 }
 
+// Exclude old protobuf-lite to avoid duplicate class errors
+configurations.all {
+    exclude(group = "com.google.protobuf", module = "protobuf-lite")
+}
+
 dependencies {
 
     implementation("androidx.core:core-ktx:1.16.0")
@@ -197,9 +201,10 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
     
-    // Firebase Analytics (uncomment when Firebase is configured)
-    // implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    // implementation("com.google.firebase:firebase-analytics-ktx")
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-firestore")
 
     //Testing
     implementation("androidx.lifecycle:lifecycle-runtime-testing:2.9.2")
