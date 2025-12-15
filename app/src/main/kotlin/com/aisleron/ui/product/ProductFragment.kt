@@ -803,6 +803,9 @@ class ProductFragment(
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.mnu_btn_save -> {
+                val priceText = binding.edtProductPrice.text.toString()
+                val price = priceText.toDoubleOrNull() ?: 0.0
+                productViewModel.updatePrice(price)
                 productViewModel.saveProduct()
                 true
             }
