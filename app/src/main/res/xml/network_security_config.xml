@@ -24,6 +24,7 @@
         <!-- Localhost -->
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.4.161.105</domain>
     </domain-config>
     
     <!-- For production, you might want to restrict this further or use HTTPS -->
