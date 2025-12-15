@@ -64,8 +64,12 @@ class AddLocationUseCaseImpl(
             )
         )
 
-        // Do not auto-copy products into the default aisle when creating a new SHOP
-        if (location.type != LocationType.SHOP) {
+        // Pre-populate default aisle with all products when:
+        // - creating a non-SHOP location (HOME, etc.), or
+        // - creating a SHOP and showDefaultAisle is true
+        val shouldPrepopulate =
+            location.type != LocationType.SHOP || (location.type == LocationType.SHOP && location.showDefaultAisle)
+        if (shouldPrepopulate) {
             addAisleProductsUseCase(
                 getAllProductsUseCase().sortedBy { it.name }.mapIndexed { _, p ->
                     AisleProduct(

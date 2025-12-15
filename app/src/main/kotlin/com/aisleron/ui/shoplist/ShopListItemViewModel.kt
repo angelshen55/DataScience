@@ -23,5 +23,6 @@ import com.aisleron.domain.FilterType
 data class ShopListItemViewModel(
     val name: String,
     val id: Int,
-    val defaultFilter: FilterType
+    val defaultFilter: FilterType,
+    val neededCount: Int = 0
 )

@@ -18,6 +18,10 @@
 package com.aisleron.domain.product.usecase
 
 import com.aisleron.data.TestDataManager
+import com.aisleron.domain.aisle.AisleRepository
+import com.aisleron.domain.aisle.usecase.GetDefaultAislesUseCase
+import com.aisleron.domain.location.LocationRepository
+import com.aisleron.domain.location.usecase.GetLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import kotlinx.coroutines.test.runTest
@@ -36,9 +40,17 @@ class UpdateProductQtyNeededUseCaseImplTest {
     fun setUp() {
         testData = TestDataManager()
         val productRepository = testData.getRepository<ProductRepository>()
+        val aisleRepository = testData.getRepository<AisleRepository>()
+        val locationRepository = testData.getRepository<LocationRepository>()
         updateProductQtyNeededUseCase = UpdateProductQtyNeededUseCaseImpl(
             GetProductUseCase(productRepository),
-            UpdateProductUseCase(productRepository, IsProductNameUniqueUseCase(productRepository))
+            UpdateProductUseCase(
+                productRepository,
+                testData.getRepository<com.aisleron.domain.record.RecordRepository>(),
+                IsProductNameUniqueUseCase(productRepository),
+                GetDefaultAislesUseCase(aisleRepository),
+                GetLocationUseCase(locationRepository)
+            )
         )
     }
 

@@ -33,18 +33,23 @@ import com.aisleron.data.loyaltycard.LoyaltyCardRepositoryImpl
 import com.aisleron.data.product.ProductDao
 import com.aisleron.data.product.ProductMapper
 import com.aisleron.data.product.ProductRepositoryImpl
+import com.aisleron.data.record.RecordDao
+import com.aisleron.data.record.RecordMapper
+import com.aisleron.data.record.RecordRepositoryImpl
 import com.aisleron.domain.GetCreateSampleDataUseCase
 import com.aisleron.domain.aisle.AisleRepository
 import com.aisleron.domain.aisleproduct.AisleProductRepository
 import com.aisleron.domain.location.LocationRepository
 import com.aisleron.domain.loyaltycard.LoyaltyCardRepository
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.record.RecordRepository
 import com.aisleron.testdata.data.aisle.AisleDaoTestImpl
 import com.aisleron.testdata.data.aisleproduct.AisleProductDaoTestImpl
 import com.aisleron.testdata.data.location.LocationDaoTestImpl
 import com.aisleron.testdata.data.loyaltycard.LocationLoyaltyCardDaoTestImpl
 import com.aisleron.testdata.data.loyaltycard.LoyaltyCardDaoTestImpl
 import com.aisleron.testdata.data.product.ProductDaoTestImpl
+import com.aisleron.testdata.data.record.RecordDaoTestImpl
 import kotlinx.coroutines.runBlocking
 
 class TestDataManager(private val addData: Boolean = true) {
@@ -56,11 +61,15 @@ class TestDataManager(private val addData: Boolean = true) {
     private val _locationLoyaltyCardDao = LocationLoyaltyCardDaoTestImpl()
     private val _loyaltyCardDao = LoyaltyCardDaoTestImpl(_locationLoyaltyCardDao)
 
+    private val _recordDao = RecordDaoTestImpl(_productDao)
+
     fun aisleDao(): AisleDao = _aisleDao
 
     fun locationDao(): LocationDao = _locationDao
 
     fun productDao(): ProductDao = _productDao
+
+    fun recordDao(): RecordDao = _recordDao
 
     fun aisleProductDao(): AisleProductDao = _aisleProductDao
 
@@ -83,6 +92,7 @@ class TestDataManager(private val addData: Boolean = true) {
                 getRepository<AisleRepository>(),
                 getRepository<ProductRepository>(),
                 getRepository<AisleProductRepository>(),
+                getRepository<com.aisleron.domain.record.RecordRepository>()
             )
             runBlocking { createSampleDataUseCase() }
         }
@@ -105,6 +115,10 @@ class TestDataManager(private val addData: Boolean = true) {
 
             LoyaltyCardRepository::class -> LoyaltyCardRepositoryImpl(
                 loyaltyCardDao(), locationLoyaltyCardDao(), LoyaltyCardMapper()
+            ) as T
+
+            RecordRepository::class -> RecordRepositoryImpl(
+                recordDao(), RecordMapper()
             ) as T
 
             else -> throw Exception("Invalid repository type requested")

@@ -17,6 +17,7 @@
 
 package com.aisleron.testdata.data.product
 
+import com.aisleron.data.aisleproduct.AisleProductDao
 import com.aisleron.data.product.ProductDao
 import com.aisleron.data.product.ProductEntity
 
@@ -40,7 +41,9 @@ class ProductDaoTestImpl : ProductDao {
                 id = id,
                 name = it.name,
                 inStock = it.inStock,
-                qtyNeeded = it.qtyNeeded
+                qtyNeeded = it.qtyNeeded,
+                price = it.price,
+                isDeleted = it.isDeleted
             )
 
             productList.add(newEntity)
@@ -54,14 +57,52 @@ class ProductDaoTestImpl : ProductDao {
     }
 
     override suspend fun getProduct(productId: Int): ProductEntity? {
-        return productList.find { it.id == productId }
+        return productList.find { it.id == productId && !it.isDeleted }
     }
 
-    override suspend fun getProducts(): List<ProductEntity> {
+    override suspend fun getActiveProducts(): List<ProductEntity> {
+        return productList.filter { !it.isDeleted }
+    }
+
+    override suspend fun getAllProductsIncludingDeleted(): List<ProductEntity> {
         return productList
     }
 
+    override suspend fun softDelete(productId: Int) {
+        val product = getProduct(productId)
+        product?.let {
+            val updatedProduct = it.copy(isDeleted = true)
+            val index = productList.indexOf(it)
+            if (index >= 0) {
+                productList[index] = updatedProduct
+            }
+        }
+    }
+
+    override suspend fun remove(product: ProductEntity, aisleProductDao: AisleProductDao) {
+        val aisleProducts = aisleProductDao.getAisleProductsByProduct(product.id)
+        aisleProductDao.delete(*aisleProducts.map { it.aisleProduct }.toTypedArray())
+        softDelete(product.id)
+    }
+
     override suspend fun getProductByName(name: String): ProductEntity? {
-        return productList.find { it.name.uppercase() == name.uppercase() }
+        return productList.find { it.name.equals(name, ignoreCase = true) && !it.isDeleted }
+    }
+
+    override suspend fun getDeletedProductByName(name: String): ProductEntity? {
+        return productList.find { it.name.equals(name, ignoreCase = true) && it.isDeleted }
+    }
+
+    override suspend fun restore(productId: Int) {
+        val product = getProduct(productId) ?: return
+        val updatedProduct = product.copy(isDeleted = false)
+        val index = productList.indexOf(product)
+        if (index >= 0) {
+            productList[index] = updatedProduct
+        }
+    }
+
+    override suspend fun getProducts(): List<ProductEntity> {
+        return productList.toList()
     }
 }

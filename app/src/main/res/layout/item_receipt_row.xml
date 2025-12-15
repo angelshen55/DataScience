@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardElevation="2dp"
+    app:cardCornerRadius="4dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+
+        <!-- First row: Name, Price, Quantity, Delete -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/et_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Name"
+                android:singleLine="true"/>
+
+            <EditText
+                android:id="@+id/et_price"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:hint="0.00"
+                android:layout_marginStart="8dp"
+                android:imeOptions="actionDone"
+                android:singleLine="true"/>
+
+            <EditText
+                android:id="@+id/et_qty"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:hint="1"
+                android:layout_marginStart="8dp"
+                android:imeOptions="actionDone"
+                android:singleLine="true"/>
+
+            <ImageButton
+                android:id="@+id/btn_delete"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Delete"
+                android:src="@android:drawable/ic_delete"/>
+        </LinearLayout>
+
+        <!-- Second row: Aisle selection -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/tv_aisle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aisle: Not selected"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:drawablePadding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:minHeight="48dp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
+

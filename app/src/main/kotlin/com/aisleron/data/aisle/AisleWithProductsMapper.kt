@@ -27,7 +27,7 @@ class AisleWithProductsMapper : MapperBaseImpl<AisleWithProducts, Aisle>() {
         rank = value.aisle.rank,
         name = value.aisle.name.trim(),
         locationId = value.aisle.locationId,
-        products = AisleProductRankMapper().toModelList(value.products),
+        products = AisleProductRankMapper().toModelList(value.products).sortedBy { it.rank },
         isDefault = value.aisle.isDefault,
         expanded = value.aisle.expanded
     )

@@ -32,9 +32,14 @@ import com.aisleron.domain.aisleproduct.AisleProductRepository
 import com.aisleron.domain.location.LocationRepository
 import com.aisleron.domain.loyaltycard.LoyaltyCardRepository
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.product.PurchaseSetRepository
+import com.aisleron.data.product.PurchaseSetRepositoryFirestoreImpl
 import com.aisleron.domain.record.RecordRepository
 import com.aisleron.data.record.RecordMapper
 import com.aisleron.data.record.RecordRepositoryImpl
+import com.aisleron.data.api.ModelApiClient
+import com.aisleron.data.api.ModelApiService
+import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
 val repositoryModule = module {
@@ -72,5 +77,14 @@ val repositoryModule = module {
             locationLoyaltyCardDao = get(),
             loyaltyCardMapper = LoyaltyCardMapper()
         )
+    }
+
+    factory<PurchaseSetRepository> {
+        PurchaseSetRepositoryFirestoreImpl(context = androidApplication())
+    }
+    
+    // API Service for model communication
+    single<ModelApiService> {
+        ModelApiClient.create()
     }
 }

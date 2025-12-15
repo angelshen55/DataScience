@@ -43,7 +43,13 @@ val viewModelModule = module {
             sortLocationByNameUseCase = get(),
             getLoyaltyCardForLocationUseCase = get(),
             updateProductQtyNeededUseCase = get(),
-            updateProductPriceUseCase = get()
+            updateProductPriceUseCase = get(),
+            getProductRecommendationsUseCase = get(),
+            getDefaultAisleForLocationUseCase = get(),
+            addAisleProductsUseCase = get(),
+            getAisleMaxRankUseCase = get(),
+            aisleProductRepository = get(),
+            getProductUseCase = get()
         )
     }
 
@@ -64,7 +70,8 @@ val viewModelModule = module {
             getShopsUseCase = get(),
             getPinnedShopsUseCase = get(),
             removeLocationUseCase = get(),
-            getLocationUseCase = get()
+            getLocationUseCase = get(),
+            getShoppingListUseCase = get()
         )
     }
 

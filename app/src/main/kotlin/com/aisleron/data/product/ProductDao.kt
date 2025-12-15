@@ -28,7 +28,7 @@ interface ProductDao : BaseDao<ProductEntity> {
     /**
      * Product
      */
-    @Query("SELECT * FROM Product WHERE id = :productId")
+    @Query("SELECT * FROM Product WHERE id = :productId AND isDeleted = 0")
     suspend fun getProduct(productId: Int): ProductEntity?
 
     @Query("SELECT * FROM Product WHERE isDeleted = 0")
@@ -47,7 +47,7 @@ interface ProductDao : BaseDao<ProductEntity> {
         softDelete(product.id)
     }
 
-    @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE")
+    @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE AND isDeleted = 0")
     suspend fun getProductByName(name: String): ProductEntity?
 
     @Query("SELECT * FROM Product WHERE name = :name COLLATE NOCASE AND isDeleted = 1")
@@ -55,4 +55,8 @@ interface ProductDao : BaseDao<ProductEntity> {
 
     @Query("UPDATE Product SET isDeleted = 0 WHERE id = :productId")
     suspend fun restore(productId: Int)
+
+    @Query("SELECT * FROM Product")
+    suspend fun getProducts(): List<ProductEntity>
+
 }

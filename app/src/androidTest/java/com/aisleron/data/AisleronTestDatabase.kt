@@ -25,12 +25,14 @@ import com.aisleron.data.loyaltycard.LoyaltyCardDao
 import com.aisleron.data.maintenance.MaintenanceDao
 import com.aisleron.data.maintenance.MaintenanceDaoTestImpl
 import com.aisleron.data.product.ProductDao
+import com.aisleron.data.record.RecordDao
 import com.aisleron.testdata.data.aisle.AisleDaoTestImpl
 import com.aisleron.testdata.data.aisleproduct.AisleProductDaoTestImpl
 import com.aisleron.testdata.data.location.LocationDaoTestImpl
 import com.aisleron.testdata.data.loyaltycard.LocationLoyaltyCardDaoTestImpl
 import com.aisleron.testdata.data.loyaltycard.LoyaltyCardDaoTestImpl
 import com.aisleron.testdata.data.product.ProductDaoTestImpl
+import com.aisleron.testdata.data.record.RecordDaoTestImpl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -44,6 +46,7 @@ class AisleronTestDatabase : AisleronDb {
     private val _maintenanceDao = MaintenanceDaoTestImpl()
     private val _locationLoyaltyCardDao = LocationLoyaltyCardDaoTestImpl()
     private val _loyaltyCardDao = LoyaltyCardDaoTestImpl(_locationLoyaltyCardDao)
+    private val _recordDao = RecordDaoTestImpl(_productDao)
 
     override fun aisleDao(): AisleDao = _aisleDao
 
@@ -58,6 +61,8 @@ class AisleronTestDatabase : AisleronDb {
     override fun loyaltyCardDao(): LoyaltyCardDao = _loyaltyCardDao
 
     override fun locationLoyaltyCardDao(): LocationLoyaltyCardDao = _locationLoyaltyCardDao
+
+    override fun recordDao(): RecordDao = _recordDao
 
     init {
         initializeDatabase()

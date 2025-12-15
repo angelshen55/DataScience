@@ -94,6 +94,7 @@ class ProductViewModel(
                 val aisle = _aisleId?.let { getAisleUseCase(it) } ?: _locationId?.let { locId ->
                     getDefaultAisleForLocationUseCase(locId)
                 }
+                val isNewProduct = product == null
                 product?.let {
                     val updated = it.copy(name = name, inStock = inStock, price = price)
                     updateProductUseCase(updated)
@@ -107,7 +108,8 @@ class ProductViewModel(
                     product = getProductUseCase(id)
                 }
 
-                _productUiState.value = ProductUiState.Success
+                val shouldShowRecommendationDialog = isNewProduct && !inStock && _locationId != null
+                _productUiState.value = ProductUiState.Success(shouldShowRecommendationDialog)
             } catch (e: AisleronException) {
                 _productUiState.value = ProductUiState.Error(e.exceptionCode, e.message)
             } catch (e: Exception) {
@@ -122,7 +124,7 @@ class ProductViewModel(
     sealed class ProductUiState {
         data object Empty : ProductUiState()
         data object Loading : ProductUiState()
-        data object Success : ProductUiState()
+        data class Success(val showRecommendationDialog: Boolean = false) : ProductUiState()
         data class Error(
             val errorCode: AisleronException.ExceptionCode, val errorMessage: String?
         ) : ProductUiState()

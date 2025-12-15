@@ -44,26 +44,34 @@ class GetCreateSampleDataUseCase {
         locationRepository: LocationRepository,
         aisleRepository: AisleRepository,
         productRepository: ProductRepository,
-        aisleProductRepository: AisleProductRepository
+        aisleProductRepository: AisleProductRepository,
+        recordRepository: com.aisleron.domain.record.RecordRepository
     ): CreateSampleDataUseCase {
         val getShoppingListUseCase = GetShoppingListUseCase(locationRepository)
         val getAllProductsUseCase = GetAllProductsUseCase(productRepository)
         val getHomeLocationUseCase = GetHomeLocationUseCase(locationRepository)
+        val getLocationUseCase = GetLocationUseCase(locationRepository)
         val addAisleProductsUseCase = AddAisleProductsUseCase(aisleProductRepository)
         val updateAisleProductRankUseCase = UpdateAisleProductRankUseCase(aisleProductRepository)
 
+        val addAisleUseCase = AddAisleUseCaseImpl(
+            aisleRepository,
+            getLocationUseCase,
+            IsAisleNameUniqueUseCase(aisleRepository)
+        )
+
         val addProductUseCase = AddProductUseCaseImpl(
             productRepository,
+            recordRepository,
             GetDefaultAislesUseCase(aisleRepository),
             addAisleProductsUseCase,
             IsProductNameUniqueUseCase(productRepository),
-            GetAisleMaxRankUseCase(aisleProductRepository)
-        )
-
-        val addAisleUseCase = AddAisleUseCaseImpl(
-            aisleRepository,
-            GetLocationUseCase(locationRepository),
-            IsAisleNameUniqueUseCase(aisleRepository)
+            com.aisleron.domain.product.usecase.IsPricePositiveUseCase(),
+            GetAisleMaxRankUseCase(aisleProductRepository),
+            getLocationUseCase,
+            getHomeLocationUseCase,
+            addAisleUseCase,
+            aisleRepository
         )
 
         val addLocationUseCase = AddLocationUseCaseImpl(
