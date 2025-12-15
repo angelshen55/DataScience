@@ -102,10 +102,7 @@ class GetProductRecommendationsUseCase(
         
         val daysSinceLastPurchase = calculateDaysSinceLastPurchase(lastPurchaseDate)
         
-        // Exponential decay - more recent purchases get lower scores
-        // But we invert this since we want to recommend items that were purchased long ago
-        // Max score for items not purchased in 365 days
-        return min(daysSinceLastPurchase.toDouble() / 365.0, 1.0)
+        return 1.0 - min(daysSinceLastPurchase.toDouble() / 365.0, 1.0)
     }
     
     private fun calculatePeriodicityScore(purchaseDates: List<Date>): Double {

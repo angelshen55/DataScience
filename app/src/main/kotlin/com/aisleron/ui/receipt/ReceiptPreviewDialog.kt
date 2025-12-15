@@ -51,16 +51,16 @@ class ReceiptPreviewDialog(
                 val list = adapter.currentList.toMutableList()
                 if (index in list.indices) {
                     list.removeAt(index)
-                    adapter.submitList(list)
-                    updateSummary()
+                    updateSummary(list)
+                    adapter.submitList(list) { updateSummary() }
                 }
             },
             onUpdate = { index, item ->
                 val list = adapter.currentList.toMutableList()
                 if (index in list.indices) {
                     list[index] = item
-                    adapter.submitList(list)
-                    updateSummary()
+                    updateSummary(list)
+                    adapter.submitList(list) { updateSummary() }
                 }
             },
             onSelectAisle = { index ->
@@ -68,8 +68,8 @@ class ReceiptPreviewDialog(
             }
         )
         rv.adapter = adapter
-        adapter.submitList(initialItems)
-        updateSummary()
+        updateSummary(initialItems)
+        adapter.submitList(initialItems) { updateSummary() }
 
         btnCancel.setOnClickListener {
             onCancelImport()
@@ -86,11 +86,11 @@ class ReceiptPreviewDialog(
             .create()
     }
 
-    private fun updateSummary() {
-        val items = adapter.currentList
+    private fun updateSummary(items: List<ReceiptItem> = adapter.currentList) {
         val total = items.fold(BigDecimal.ZERO) { acc, it ->
             acc + (it.unitPrice.multiply(BigDecimal(it.quantity)))
         }
-        tvSummary?.text = "Items: ${items.size}   Total: ${total.toPlainString()}"
+        val formattedTotal = total.setScale(1, java.math.RoundingMode.HALF_UP).toPlainString()
+        tvSummary?.text = "Items: ${items.size}   Total: $formattedTotal"
     }
 }

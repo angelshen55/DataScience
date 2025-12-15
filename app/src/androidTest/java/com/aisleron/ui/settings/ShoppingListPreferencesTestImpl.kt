@@ -18,6 +18,7 @@
 package com.aisleron.ui.settings
 
 import android.content.Context
+import java.util.Calendar
 
 class ShoppingListPreferencesTestImpl : ShoppingListPreferences {
 
@@ -26,6 +27,8 @@ class ShoppingListPreferencesTestImpl : ShoppingListPreferences {
     private var _keepScreenOn: Boolean = false
     private var _trackingMode: ShoppingListPreferences.TrackingMode =
         ShoppingListPreferences.TrackingMode.CHECKBOX
+    private var _lastRecommendationDisplayDate: Long = 0L
+    private var _todayRecommendationsDate: Long = 0L
 
     override fun isStatusChangeSnackBarHidden(context: Context): Boolean = _hideStatusChangeSnackBar
     override fun showEmptyAisles(context: Context): Boolean = _showEmptyAisles
@@ -35,6 +38,39 @@ class ShoppingListPreferencesTestImpl : ShoppingListPreferences {
 
     override fun setShowEmptyAisles(context: Context, value: Boolean) {
         _showEmptyAisles = value
+    }
+
+    override fun getLastRecommendationDisplayDate(context: Context): Long =
+        _lastRecommendationDisplayDate
+
+    override fun setLastRecommendationDisplayDate(context: Context, timestamp: Long) {
+        _lastRecommendationDisplayDate = timestamp
+    }
+
+    override fun shouldShowRecommendationsToday(context: Context): Boolean {
+        val lastDisplayDate = getLastRecommendationDisplayDate(context)
+        if (lastDisplayDate == 0L) return true
+
+        val lastCal = Calendar.getInstance().apply { timeInMillis = lastDisplayDate }
+        val todayCal = Calendar.getInstance()
+        return lastCal.get(Calendar.YEAR) != todayCal.get(Calendar.YEAR) ||
+                lastCal.get(Calendar.DAY_OF_YEAR) != todayCal.get(Calendar.DAY_OF_YEAR)
+    }
+
+    override fun getTodayRecommendationsDate(context: Context): Long = _todayRecommendationsDate
+
+    override fun setTodayRecommendationsDate(context: Context, timestamp: Long) {
+        _todayRecommendationsDate = timestamp
+    }
+
+    override fun isTodayRecommendationsDate(context: Context): Boolean {
+        val todayTimestamp = getTodayRecommendationsDate(context)
+        if (todayTimestamp == 0L) return false
+
+        val todayStored = Calendar.getInstance().apply { timeInMillis = todayTimestamp }
+        val todayNow = Calendar.getInstance()
+        return todayStored.get(Calendar.YEAR) == todayNow.get(Calendar.YEAR) &&
+                todayStored.get(Calendar.DAY_OF_YEAR) == todayNow.get(Calendar.DAY_OF_YEAR)
     }
 
     fun setHideStatusChangeSnackBar(hideSnackBar: Boolean) {

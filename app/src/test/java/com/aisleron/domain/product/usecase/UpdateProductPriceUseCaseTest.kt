@@ -26,6 +26,7 @@ import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.record.Record
 import com.aisleron.domain.record.RecordRepository
+import com.aisleron.domain.record.ProductPurchaseCount
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.Date
 import java.util.stream.Stream
 
 class UpdateProductPriceUseCaseTest {
@@ -63,6 +65,8 @@ class UpdateProductPriceUseCaseTest {
             override suspend fun remove(item: Record) {}
             override suspend fun getRecordsByProduct(productId: Int) = emptyList<Record>()
             override suspend fun getRecordsByDateRange(startDate: Long, endDate: Long) = emptyList<Record>()
+            override suspend fun getProductPurchaseCounts(): List<ProductPurchaseCount> = emptyList()
+            override suspend fun getPurchaseDatesForProduct(productId: Int): List<Date> = emptyList()
         }
         
         val getProductUseCase = GetProductUseCase(productRepository)

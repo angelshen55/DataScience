@@ -25,7 +25,11 @@ class LocationWithAislesWithProductsMapper :
     MapperBaseImpl<LocationWithAislesWithProducts, Location>() {
     override fun toModel(value: LocationWithAislesWithProducts): Location {
         val location = LocationMapper().toModel(value.location)
-        return location.copy(aisles = AisleWithProductsMapper().toModelList(value.aisles))
+        return location.copy(
+            aisles = AisleWithProductsMapper()
+                .toModelList(value.aisles)
+                .sortedBy { it.rank }
+        )
     }
 
     override fun fromModel(value: Location) = LocationWithAislesWithProducts(

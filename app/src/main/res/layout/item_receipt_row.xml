@@ -35,15 +35,17 @@
                 android:inputType="numberDecimal"
                 android:hint="0.00"
                 android:layout_marginStart="8dp"
+                android:imeOptions="actionDone"
                 android:singleLine="true"/>
 
             <EditText
                 android:id="@+id/et_qty"
                 android:layout_width="56dp"
                 android:layout_height="wrap_content"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:hint="1"
                 android:layout_marginStart="8dp"
+                android:imeOptions="actionDone"
                 android:singleLine="true"/>
 
             <ImageButton
@@ -83,5 +85,4 @@
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>
-
 

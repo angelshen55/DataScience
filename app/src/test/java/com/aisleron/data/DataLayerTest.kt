@@ -114,7 +114,7 @@ class DataLayerTest {
             date = Date(),
             stock = true,
             price = 10.0,
-            quantity = 2,
+            quantity = 2.0,
             shop = "Test Shop"
         )
         
@@ -124,7 +124,7 @@ class DataLayerTest {
         assertNotNull(retrievedRecord)
         assertEquals(productId, retrievedRecord?.productId)
         assertEquals(10.0, retrievedRecord?.price)
-        assertEquals(2, retrievedRecord?.quantity)
+        assertEquals(2.0, retrievedRecord?.quantity)
         assertEquals("Test Shop", retrievedRecord?.shop)
     }
 
@@ -145,8 +145,8 @@ class DataLayerTest {
         val productId = productDao.upsert(product)[0].toInt()
         
         // 创建多条记录
-        val record1 = RecordEntity(0, productId, Date(), true, 10.0, 1, "Shop 1")
-        val record2 = RecordEntity(0, productId, Date(), true, 10.0, 2, "Shop 2")
+        val record1 = RecordEntity(0, productId, Date(), true, 10.0, 1.0, "Shop 1")
+        val record2 = RecordEntity(0, productId, Date(), true, 10.0, 2.0, "Shop 2")
         
         recordDao.upsert(record1, record2)
         
@@ -179,7 +179,7 @@ class DataLayerTest {
             date = Date(),
             stock = true,
             price = 15.0,
-            quantity = 3,
+            quantity = 3.0,
             shop = "Shop X"
         )
         recordDao.upsert(record)
@@ -190,7 +190,7 @@ class DataLayerTest {
         val historyItem = history.first()
         assertEquals("Product B", historyItem.productName)
         assertEquals(15.0, historyItem.unitPrice)
-        assertEquals(3, historyItem.quantity)
+        assertEquals(3.0, historyItem.quantity)
         assertEquals(45.0, historyItem.totalCost) // 15.0 * 3
         assertEquals("Shop X", historyItem.shop)
     }
@@ -217,7 +217,7 @@ class DataLayerTest {
             date = Date(),
             stock = true,
             price = 20.0,
-            quantity = 1,
+            quantity = 1.0,
             shop = "Test Shop"
         )
         
@@ -229,4 +229,3 @@ class DataLayerTest {
         assertEquals(20.0, retrievedRecord?.price)
     }
 }
-

@@ -176,7 +176,9 @@ class ProductFragment(
                     productViewModel.productUiState.collect {
                         when (it) {
                             is ProductViewModel.ProductUiState.Success -> {
-                                if (it.showRecommendationDialog) {
+                                val addEditProductBundle = Bundler().getAddEditProductBundle(arguments)
+                                val hasLocation = addEditProductBundle.locationId != null
+                                if (it.showRecommendationDialog && hasLocation) {
                                     showRecommendationBottomSheet()
                                 } else {
                                     addEditFragmentListener.addEditActionCompleted(requireActivity())

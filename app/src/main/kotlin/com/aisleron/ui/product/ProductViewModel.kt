@@ -108,8 +108,7 @@ class ProductViewModel(
                     product = getProductUseCase(id)
                 }
 
-                // Check if this is a new product added to needed list (inStock = false)
-                val shouldShowRecommendationDialog = isNewProduct && !inStock
+                val shouldShowRecommendationDialog = isNewProduct && !inStock && _locationId != null
                 _productUiState.value = ProductUiState.Success(shouldShowRecommendationDialog)
             } catch (e: AisleronException) {
                 _productUiState.value = ProductUiState.Error(e.exceptionCode, e.message)

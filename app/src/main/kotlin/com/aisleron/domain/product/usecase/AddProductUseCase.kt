@@ -88,21 +88,17 @@ class AddProductUseCaseImpl(
                 }
             )
 
-            // Mirror into HOME same-named aisles when created in a SHOP aisle
-            val home = getHomeLocationUseCase()
-            val shopAisleNames = aislesToAdd.mapNotNull { a ->
-                val loc = getLocationUseCase(a.locationId)
-                if (loc?.type == LocationType.SHOP) a.name else null
-            }.distinct()
-
-            if (shopAisleNames.isNotEmpty()) {
-                val homeAisles = aisleRepository.getForLocation(home.id)
-                val targetHomeAisles = shopAisleNames.map { name ->
-                    homeAisles.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: run {
+            // Mirror into HOME same-named aisle ONLY when adding to a specific SHOP aisle
+            if (targetAisle != null) {
+                val loc = getLocationUseCase(targetAisle.locationId)
+                if (loc?.type == LocationType.SHOP) {
+                    val home = getHomeLocationUseCase()
+                    val homeAisles = aisleRepository.getForLocation(home.id)
+                    val targetHomeAisle = homeAisles.firstOrNull { it.name.equals(targetAisle.name, ignoreCase = true) } ?: run {
                         val newId = addAisleUseCase(
                             Aisle(
                                 id = 0,
-                                name = name,
+                                name = targetAisle.name,
                                 locationId = home.id,
                                 rank = 1000,
                                 isDefault = false,
@@ -112,18 +108,18 @@ class AddProductUseCaseImpl(
                         )
                         aisleRepository.get(newId)!!
                     }
-                }
 
-                addAisleProductsUseCase(
-                    targetHomeAisles.map { ha ->
-                        AisleProduct(
-                            aisleId = ha.id,
-                            product = revived,
-                            rank = getAisleMaxRankUseCase(ha) + 1,
-                            id = 0
+                    addAisleProductsUseCase(
+                        listOf(
+                            AisleProduct(
+                                aisleId = targetHomeAisle.id,
+                                product = revived,
+                                rank = getAisleMaxRankUseCase(targetHomeAisle) + 1,
+                                id = 0
+                            )
                         )
-                    }
-                )
+                    )
+                }
             }
             return revived.id
         }
@@ -173,21 +169,17 @@ class AddProductUseCaseImpl(
             }
         )
 
-        // Mirror into HOME same-named aisles when created in a SHOP aisle
-        val home = getHomeLocationUseCase()
-        val shopAisleNames = aislesToAdd.mapNotNull { a ->
-            val loc = getLocationUseCase(a.locationId)
-            if (loc?.type == LocationType.SHOP) a.name else null
-        }.distinct()
-
-        if (shopAisleNames.isNotEmpty()) {
-            val homeAisles = aisleRepository.getForLocation(home.id)
-            val targetHomeAisles = shopAisleNames.map { name ->
-                homeAisles.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: run {
+        // Mirror into HOME same-named aisle ONLY when adding to a specific SHOP aisle
+        if (targetAisle != null) {
+            val loc = getLocationUseCase(targetAisle.locationId)
+            if (loc?.type == LocationType.SHOP) {
+                val home = getHomeLocationUseCase()
+                val homeAisles = aisleRepository.getForLocation(home.id)
+                val targetHomeAisle = homeAisles.firstOrNull { it.name.equals(targetAisle.name, ignoreCase = true) } ?: run {
                     val newId = addAisleUseCase(
                         Aisle(
                             id = 0,
-                            name = name,
+                            name = targetAisle.name,
                             locationId = home.id,
                             rank = 1000,
                             isDefault = false,
@@ -197,18 +189,18 @@ class AddProductUseCaseImpl(
                     )
                     aisleRepository.get(newId)!!
                 }
-            }
 
-            addAisleProductsUseCase(
-                targetHomeAisles.map { ha ->
-                    AisleProduct(
-                        aisleId = ha.id,
-                        product = newProduct,
-                        rank = getAisleMaxRankUseCase(ha) + 1,
-                        id = 0
+                addAisleProductsUseCase(
+                    listOf(
+                        AisleProduct(
+                            aisleId = targetHomeAisle.id,
+                            product = newProduct,
+                            rank = getAisleMaxRankUseCase(targetHomeAisle) + 1,
+                            id = 0
+                        )
                     )
-                }
-            )
+                )
+            }
         }
 
         return newProduct.id

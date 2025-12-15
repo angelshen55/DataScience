@@ -57,7 +57,7 @@ class ProductDaoTestImpl : ProductDao {
     }
 
     override suspend fun getProduct(productId: Int): ProductEntity? {
-        return productList.find { it.id == productId }
+        return productList.find { it.id == productId && !it.isDeleted }
     }
 
     override suspend fun getActiveProducts(): List<ProductEntity> {
@@ -86,7 +86,7 @@ class ProductDaoTestImpl : ProductDao {
     }
 
     override suspend fun getProductByName(name: String): ProductEntity? {
-        return productList.find { it.name.uppercase() == name.uppercase() }
+        return productList.find { it.name.equals(name, ignoreCase = true) && !it.isDeleted }
     }
 
     override suspend fun getDeletedProductByName(name: String): ProductEntity? {

@@ -31,6 +31,9 @@ import com.aisleron.domain.aisle.usecase.RemoveAisleUseCase
 import com.aisleron.domain.aisle.usecase.UpdateAisleExpandedUseCase
 import com.aisleron.domain.aisle.usecase.UpdateAisleRankUseCase
 import com.aisleron.domain.aisleproduct.usecase.UpdateAisleProductRankUseCase
+import com.aisleron.domain.aisleproduct.usecase.AddAisleProductsUseCase
+import com.aisleron.domain.aisleproduct.usecase.GetAisleMaxRankUseCase
+import com.aisleron.domain.aisleproduct.AisleProductRepository
 import com.aisleron.domain.base.AisleronException
 import com.aisleron.domain.location.Location
 import com.aisleron.domain.location.LocationRepository
@@ -43,11 +46,12 @@ import com.aisleron.domain.loyaltycard.LoyaltyCardRepository
 import com.aisleron.domain.loyaltycard.usecase.GetLoyaltyCardForLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRepository
+import com.aisleron.domain.product.usecase.GetProductRecommendationsUseCase
+import com.aisleron.domain.product.usecase.GetProductUseCase
 import com.aisleron.domain.product.usecase.RemoveProductUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCase
 import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
 import com.aisleron.domain.product.usecase.UpdateProductStatusUseCase
-import com.aisleron.domain.product.usecase.UpdateProductPriceUseCase
 import com.aisleron.domain.sampledata.usecase.CreateSampleDataUseCase
 import com.aisleron.domain.shoppinglist.usecase.GetShoppingListUseCase
 import kotlinx.coroutines.flow.first
@@ -410,7 +414,13 @@ class ShoppingListViewModelTest : KoinTest {
             get<SortLocationByNameUseCase>(),
             get<GetLoyaltyCardForLocationUseCase>(),
             get<UpdateProductQtyNeededUseCase>(),
-            get<UpdateProductPriceUseCase>()
+            get<UpdateProductPriceUseCase>(),
+            get<GetProductRecommendationsUseCase>(),
+            get<com.aisleron.domain.aisle.usecase.GetDefaultAisleForLocationUseCase>(),
+            get<AddAisleProductsUseCase>(),
+            get<GetAisleMaxRankUseCase>(),
+            get<AisleProductRepository>(),
+            get<GetProductUseCase>()
         )
 
         Assert.assertNotNull(vm)

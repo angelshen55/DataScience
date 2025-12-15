@@ -20,7 +20,9 @@ package com.aisleron.testdata.data.record
 import com.aisleron.data.record.RecordDao
 import com.aisleron.data.record.RecordEntity
 import com.aisleron.data.record.RecordWithProductUi
+import com.aisleron.data.record.ProductPurchaseCount
 import com.aisleron.testdata.data.product.ProductDaoTestImpl
+import java.util.Date
 
 class RecordDaoTestImpl(private val productDao: ProductDaoTestImpl) : RecordDao {
 
@@ -105,5 +107,26 @@ class RecordDaoTestImpl(private val productDao: ProductDaoTestImpl) : RecordDao 
             val matchesEnd = endMillis == null || record.date.time <= endMillis
             matchesName && matchesShop && matchesStart && matchesEnd
         }
+    }
+
+    override suspend fun getPurchaseDatesForProduct(productId: Int): List<Date> {
+        return recordList
+            .filter { it.productId == productId }
+            .map { it.date }
+            .sortedBy { it.time }
+    }
+
+    override suspend fun getProductPurchaseCounts(): List<ProductPurchaseCount> {
+        return recordList
+            .groupBy { it.productId }
+            .map { (pid, records) ->
+                val name = productDao.getProduct(pid)?.name ?: "Unknown Product"
+                ProductPurchaseCount(
+                    productId = pid,
+                    productName = name,
+                    purchaseCount = records.size
+                )
+            }
+            .sortedByDescending { it.purchaseCount }
     }
 }

@@ -81,7 +81,7 @@ class DatabaseMigrationTest {
         }
 
         // Re-open the database with version 2
-        val db = helper.runMigrationsAndValidate(testDb, 2, true)
+        val db = helper.runMigrationsAndValidate(testDb, 2, true, MIGRATION_1_2)
 
         // MigrationTestHelper automatically verifies the schema changes,
         // but you need to validate that the data was migrated properly.
@@ -106,7 +106,7 @@ class DatabaseMigrationTest {
             close()
         }
 
-        val db = helper.runMigrationsAndValidate(testDb, 3, true)
+        val db = helper.runMigrationsAndValidate(testDb, 3, true, MIGRATION_2_3)
 
         db.apply {
             val queryBuilder = SupportSQLiteQueryBuilder.builder("LoyaltyCard")
@@ -125,7 +125,7 @@ class DatabaseMigrationTest {
             close()
         }
 
-        val db = helper.runMigrationsAndValidate(testDb, 4, true)
+        val db = helper.runMigrationsAndValidate(testDb, 4, true, MIGRATION_3_4)
         var qtyNeeded = -1
 
         db.apply {
@@ -151,7 +151,16 @@ class DatabaseMigrationTest {
             InstrumentationRegistry.getInstrumentation().targetContext,
             AisleronDatabase::class.java,
             testDb
-        ).build()
+        )
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+                MIGRATION_6_7
+            )
+            .build()
 
         // LoyaltyCard introduced in V3
         val loyaltyCards = runBlocking { db.loyaltyCardDao().getLoyaltyCards() }

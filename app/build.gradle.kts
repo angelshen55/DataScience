@@ -73,7 +73,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.aisleron.di.KoinInstrumentationTestRunner"
 
         // load local.properties (root) and inject BAIDU credentials into BuildConfig
         val localProps = Properties()
@@ -256,4 +256,3 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
-

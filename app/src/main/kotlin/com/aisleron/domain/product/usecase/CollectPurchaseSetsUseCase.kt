@@ -17,7 +17,6 @@
 
 package com.aisleron.domain.product.usecase
 
-import android.util.Log
 import com.aisleron.domain.product.PurchaseSet
 import com.aisleron.domain.product.PurchaseSetRepository
 import com.aisleron.domain.record.Record
@@ -48,7 +47,7 @@ class CollectPurchaseSetsUseCaseImpl(
     }
     
     override suspend operator fun invoke(daysBack: Int): Int {
-        Log.i(TAG, "Starting purchase set collection (looking back $daysBack days)")
+        println("[$TAG] Starting purchase set collection (looking back $daysBack days)")
         
         // Get the last collection time to avoid re-collecting old data
         val lastCollectionTime = purchaseSetRepository.getLastCollectionTime()
@@ -64,35 +63,35 @@ class CollectPurchaseSetsUseCaseImpl(
         // Log time range for debugging
         val startDateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(startTime))
         val endDateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(now))
-        Log.i(TAG, "Querying records from $startDateStr to $endDateStr")
+        println("[$TAG] Querying records from $startDateStr to $endDateStr")
         
         // Get all purchase records since startTime
         val allRecords = recordRepository.getRecordsByDateRange(startTime, now)
-        Log.i(TAG, "Found ${allRecords.size} total records in time range")
+        println("[$TAG] Found ${allRecords.size} total records in time range")
         
         // Filter for purchased items (stock = true means inStock, i.e., purchased)
         val records = allRecords
             .filter { it.stock } // Only stock = true (purchased items)
             .sortedBy { it.date.time }
         
-        Log.i(TAG, "After filtering for stock=true: ${records.size} purchase records")
+        println("[$TAG] After filtering for stock=true: ${records.size} purchase records")
         
         // Log sample records for debugging
         if (allRecords.isNotEmpty() && records.isEmpty()) {
-            Log.w(TAG, "All records have stock=false. Sample records:")
+            println("[$TAG] WARN: All records have stock=false. Sample records:")
             allRecords.take(5).forEach { record ->
                 val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(record.date)
-                Log.w(TAG, "  Record: productId=${record.productId}, date=$dateStr, stock=${record.stock}")
+                println("[$TAG] WARN:   Record: productId=${record.productId}, date=$dateStr, stock=${record.stock}")
             }
         }
         
         if (records.isEmpty()) {
-            Log.i(TAG, "No purchase records found in the specified time range")
+            println("[$TAG] No purchase records found in the specified time range")
             purchaseSetRepository.updateLastCollectionTime(now)
             return 0
         }
         
-        Log.i(TAG, "Processing ${records.size} purchase records")
+        println("[$TAG] Processing ${records.size} purchase records")
         
         // Group records into 2-hour windows
         val purchaseSets = groupRecordsIntoPurchaseSets(records)
@@ -112,7 +111,7 @@ class CollectPurchaseSetsUseCaseImpl(
         // Update last collection time
         purchaseSetRepository.updateLastCollectionTime(now)
         
-        Log.i(TAG, "Collection complete: $newSetsCount new purchase sets collected from ${purchaseSets.size} total sets")
+        println("[$TAG] Collection complete: $newSetsCount new purchase sets collected from ${purchaseSets.size} total sets")
         return newSetsCount
     }
     
@@ -168,4 +167,3 @@ class CollectPurchaseSetsUseCaseImpl(
         return purchaseSets
     }
 }
-
