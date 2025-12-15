@@ -33,7 +33,7 @@ import com.aisleron.domain.location.LocationRepository
 import com.aisleron.domain.loyaltycard.LoyaltyCardRepository
 import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.product.PurchaseSetRepository
-import com.aisleron.data.product.PurchaseSetRepositoryImpl
+import com.aisleron.data.product.PurchaseSetRepositoryFirestoreImpl
 import com.aisleron.domain.record.RecordRepository
 import com.aisleron.data.record.RecordMapper
 import com.aisleron.data.record.RecordRepositoryImpl
@@ -80,7 +80,7 @@ val repositoryModule = module {
     }
 
     factory<PurchaseSetRepository> {
-        PurchaseSetRepositoryImpl(context = androidApplication())
+        PurchaseSetRepositoryFirestoreImpl(context = androidApplication())
     }
     
     // API Service for model communication

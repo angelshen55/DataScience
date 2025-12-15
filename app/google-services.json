@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "580640764134",
+    "project_id": "aisleron-shopping",
+    "storage_bucket": "aisleron-shopping.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:580640764134:android:aec8fbb01e8612d8e0cb27",
+        "android_client_info": {
+          "package_name": "com.aisleron"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc2TWdwj4TPfUvCm3j592PjkMTU_nwHwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:580640764134:android:3d10f856bb7058e7e0cb27",
+        "android_client_info": {
+          "package_name": "com.aisleron.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc2TWdwj4TPfUvCm3j592PjkMTU_nwHwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
