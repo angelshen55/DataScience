@@ -49,7 +49,8 @@ val viewModelModule = module {
             addAisleProductsUseCase = get(),
             getAisleMaxRankUseCase = get(),
             aisleProductRepository = get(),
-            getProductUseCase = get()
+            getProductUseCase = get(),
+            productRepository = get()
         )
     }
 

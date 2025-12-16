@@ -38,6 +38,7 @@ import com.aisleron.domain.loyaltycard.LoyaltyCard
 import com.aisleron.domain.loyaltycard.usecase.GetLoyaltyCardForLocationUseCase
 import com.aisleron.domain.product.Product
 import com.aisleron.domain.product.ProductRecommendation
+import com.aisleron.domain.product.ProductRepository
 import com.aisleron.domain.product.usecase.GetProductRecommendationsUseCase
 import com.aisleron.domain.product.usecase.RemoveProductUseCase
 import com.aisleron.domain.product.usecase.UpdateProductQtyNeededUseCase
@@ -73,6 +74,7 @@ class ShoppingListViewModel(
     private val getAisleMaxRankUseCase: GetAisleMaxRankUseCase,
     private val aisleProductRepository: AisleProductRepository,
     private val getProductUseCase: com.aisleron.domain.product.usecase.GetProductUseCase,
+    private val productRepository: ProductRepository,
     private val debounceTime: Long = 300,
     coroutineScopeProvider: CoroutineScope? = null
 ) : ViewModel() {
@@ -206,7 +208,7 @@ class ShoppingListViewModel(
                dateCalendar.get(java.util.Calendar.DAY_OF_YEAR) == todayCalendar.get(java.util.Calendar.DAY_OF_YEAR)
     }
     
-    fun loadRecommendations() {
+    fun loadRecommendations(forceRefresh: Boolean = false) {
         coroutineScope.launch {
             if (_context != null) {
                 val preferences = com.aisleron.ui.settings.ShoppingListPreferencesImpl()
@@ -217,7 +219,8 @@ class ShoppingListViewModel(
                 val isFirstTimeToday = !isToday(storedDate)
                 
                 // Check if we have recommendations for today in memory cache
-                val recommendations = if (isToday(todayRecommendationsDate) && todayRecommendations != null) {
+                // If forceRefresh is true, always recalculate
+                val recommendations = if (!forceRefresh && isToday(todayRecommendationsDate) && todayRecommendations != null) {
                     // Use cached recommendations for today
                     todayRecommendations!!
                 } else {
@@ -302,6 +305,34 @@ class ShoppingListViewModel(
     fun updateProductStatus(item: ProductShoppingListItem, inStock: Boolean) {
         coroutineScope.launch {
             updateProductStatusUseCase(item.id, inStock)
+        }
+    }
+    
+    /**
+     * Restore product if it's soft deleted, then add to current location's default aisle
+     */
+    suspend fun restoreAndAddProductToCurrentLocation(productId: Int, locationId: Int, productName: String) {
+        // First, check if product exists (not soft deleted)
+        var product = getProductUseCase(productId)
+        
+        // If product doesn't exist, it might be soft deleted - try to restore it
+        if (product == null) {
+            // Try to find deleted product by name and restore it
+            val deletedProduct = productRepository.getDeletedByName(productName)
+            if (deletedProduct != null && deletedProduct.id == productId) {
+                // Restore the product (sets isDeleted = false in database)
+                productRepository.restore(deletedProduct)
+                // After restore, getProductUseCase should now return the product
+                product = getProductUseCase(productId)
+            } else {
+                // Product not found, cannot proceed
+                return
+            }
+        }
+        
+        // Now add product to location (product should be available now)
+        if (product != null) {
+            addProductToCurrentLocationIfNeeded(productId, locationId)
         }
     }
     

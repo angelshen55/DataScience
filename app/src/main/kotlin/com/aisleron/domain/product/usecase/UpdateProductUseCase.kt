@@ -57,7 +57,7 @@ class UpdateProductUseCase(
                     date = Date(),
                     stock = product.inStock,
                     price = product.price,
-                    quantity = product.qtyNeeded.toDouble(),
+                    quantity = if (product.qtyNeeded > 0) product.qtyNeeded.toDouble() else 1.0,
                     shop = shopName ?: "None"
                 )
             )

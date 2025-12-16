@@ -71,7 +71,7 @@ class AddProductUseCaseImpl(
                     date = Date(),
                     stock = revived.inStock,
                     price = revived.price,
-                    quantity = revived.qtyNeeded.toDouble(),
+                    quantity = if (revived.qtyNeeded > 0) revived.qtyNeeded.toDouble() else 1.0,
                     shop = revivedShopName ?: "None"
                 )
             )
@@ -151,7 +151,7 @@ class AddProductUseCaseImpl(
                 date = Date(),
                 stock = newProduct.inStock,
                 price = newProduct.price,
-                quantity = newProduct.qtyNeeded.toDouble(),
+                quantity = if (newProduct.qtyNeeded > 0) newProduct.qtyNeeded.toDouble() else 1.0,
                 shop = shopName ?: "None"
             )
         )

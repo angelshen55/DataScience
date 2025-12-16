@@ -302,10 +302,11 @@ class ShoppingListFragment(
                 object : RecommendationRecyclerViewAdapter.RecommendationListener {
                     override fun onAddToListClicked(recommendation: ProductRecommendation) {
                         viewLifecycleOwner.lifecycleScope.launch {
-                            // Ensure product is added to current location's default aisle if not already present
-                            shoppingListViewModel.addProductToCurrentLocationIfNeeded(
+                            // Restore product if soft deleted, then add to current location's default aisle
+                            shoppingListViewModel.restoreAndAddProductToCurrentLocation(
                                 recommendation.product.id,
-                                shoppingListViewModel.locationId
+                                shoppingListViewModel.locationId,
+                                recommendation.product.name
                             )
                             
                             // Move the product to needed status
@@ -744,8 +745,9 @@ class ShoppingListFragment(
             // Hide recommendations if they're already visible
             shoppingListViewModel.hideRecommendations()
         } else {
-            // Request recommendations from the ViewModel
-            shoppingListViewModel.loadRecommendations()
+            // Request recommendations from the ViewModel with forceRefresh=true
+            // This ensures we always recalculate when manually triggered via button
+            shoppingListViewModel.loadRecommendations(forceRefresh = true)
         }
     }
     
