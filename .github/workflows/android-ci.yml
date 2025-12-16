@@ -29,6 +29,17 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Create local.properties with secrets
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" >> local.properties
+
+          # 添加你的 API 密钥
+          echo "baidu.client_id=${{ secrets.BAIDU_CLIENT_ID }}" >> local.properties
+          echo "baidu.client_secret=${{ secrets.BAIDU_CLIENT_SECRET }}" >> local.properties
+
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
