@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 object ModelApiClient {
     
     // Default base URL - can be configured via BuildConfig or SharedPreferences
-    private const val DEFAULT_BASE_URL = "http://10.0.2.2:8000" // Android emulator localhost
+    private const val DEFAULT_BASE_URL = "http://10.7.160.16:8000" // Android emulator localhost
     // For physical device, use your computer's IP: "http://192.168.x.x:8000"
     
     /**
