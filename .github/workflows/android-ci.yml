@@ -2,7 +2,7 @@ name: Android CI (Debug)
 
 on:
   push:
-    branches: [ "main", "workflowUpdate","release2"]
+    branches: [ "main", "workflowUpdate","remotellm"]
   pull_request:
   workflow_dispatch:
 
